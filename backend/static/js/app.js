@@ -8,6 +8,12 @@ let trajectoryMap = null;
 let trajPolyline = null;
 let trajMarkers = [];
 let animVehicleMarker = null;
+let corridorMap = null;
+let corridorPolyline = null;
+let corridorMarkers = [];
+let corridorVehicleMarker = null;
+let activeCorridorId = 'CORRIDOR-AMB-911';
+let currentCorridorData = null;
 let currentTab = '3dtwin';
 let activeTrackedPlate = '7XYZ912';
 let speedChart = null;
@@ -19,9 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initLeafletMaps();
   loadInitialDashboardData();
   
-  // Hash route detection (e.g. #tracking, #ocr, #alerts)
+  // Hash route detection (e.g. #tracking, #corridor, #ocr, #alerts)
   const hash = window.location.hash.replace('#', '');
-  if (hash && ['3dtwin', 'tracking', 'macro', 'ocr', 'alerts', 'simulation'].includes(hash)) {
+  if (hash && ['3dtwin', 'tracking', 'corridor', 'macro', 'ocr', 'alerts', 'simulation'].includes(hash)) {
     switchTab(hash);
   } else {
     switchTab('3dtwin');
@@ -29,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Periodic refresh
   setInterval(() => {
+    if (currentTab === 'corridor') loadCorridorData();
     if (currentTab === 'macro') loadMacroTraffic();
     if (currentTab === 'alerts') loadAlerts();
   }, 12000);
@@ -72,6 +79,11 @@ window.switchTab = function (tabId) {
     setTimeout(() => {
       if (trajectoryMap) trajectoryMap.invalidateSize();
       runTrajectorySearch();
+    }, 100);
+  } else if (tabId === 'corridor') {
+    setTimeout(() => {
+      if (corridorMap) corridorMap.invalidateSize();
+      loadCorridorData();
     }, 100);
   } else if (tabId === 'macro') {
     setTimeout(() => {
@@ -133,6 +145,16 @@ function initLeafletMaps() {
       maxZoom: 19,
       attribution: '&copy; CARTO &copy; OpenStreetMap'
     }).addTo(trajectoryMap);
+  }
+
+  // 3. Green Corridor Map
+  const corrEl = document.getElementById('corridor-map');
+  if (corrEl && !corridorMap) {
+    corridorMap = L.map('corridor-map', { zoomControl: true }).setView(bangaloreCenter, 13);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      attribution: '&copy; CARTO &copy; OpenStreetMap'
+    }).addTo(corridorMap);
   }
 }
 
@@ -840,3 +862,562 @@ window.runSimulation = async function () {
     console.error("Simulation error:", e);
   }
 };
+
+// =========================================================================
+// DYNAMIC EMERGENCY GREEN CORRIDOR ROUTING CONTROLLER
+// =========================================================================
+
+async function loadCorridorData() {
+  try {
+    let url = activeCorridorId ? `/api/v1/corridors/${activeCorridorId}` : `/api/v1/corridors`;
+    let res = await fetch(url);
+    if (!res.ok && activeCorridorId) {
+      res = await fetch('/api/v1/corridors');
+    }
+    if (!res.ok) return;
+
+    let data = await res.json();
+    if (Array.isArray(data)) {
+      if (data.length === 0) return;
+      data = data.find(c => c.active) || data[0];
+    }
+    currentCorridorData = data;
+    activeCorridorId = data.corridor_id;
+
+    renderCorridorTelematics(data);
+    renderSignalControllersRack(data);
+    renderCorridorOnMap(data);
+
+    const coords3D = data.route_3d_coordinates || data.waypoints_3d;
+    if (window.show3DGreenCorridor && coords3D && coords3D.length > 0) {
+      const vCoords3D = data.current_step_index !== undefined && coords3D[data.current_step_index] 
+        ? coords3D[data.current_step_index] 
+        : coords3D[0];
+      window.show3DGreenCorridor(coords3D, vCoords3D);
+    }
+
+    loadCorridorTelemetry();
+  } catch (err) {
+    console.error("Failed to load corridor data:", err);
+  }
+}
+
+async function loadCorridorTelemetry() {
+  try {
+    const res = await fetch('/api/v1/corridors/telemetry');
+    if (!res.ok) return;
+    const t = await res.json();
+    const runsEl = document.getElementById('corr-macro-runs');
+    const totalRuns = t.total_active_corridors_today ?? t.active_corridors_count ?? t.total_emergency_runs_today ?? 0;
+    if (runsEl) runsEl.innerText = `${totalRuns} Incidents`;
+    const minsEl = document.getElementById('corr-macro-mins');
+    const avgMins = t.average_time_saved_per_run_min ?? t.avg_minutes_saved ?? t.average_time_saved_minutes ?? 0;
+    if (minsEl) minsEl.innerText = `${avgMins} min`;
+  } catch (e) {
+    console.warn("Failed corridor telemetry fetch:", e);
+  }
+}
+
+function renderCorridorTelematics(c) {
+  const v = c.vehicle || {};
+  const callsignEl = document.getElementById('corr-vehicle-callsign');
+  if (callsignEl) callsignEl.innerText = v.callsign || 'EMERGENCY UNIT';
+
+  const plateEl = document.getElementById('corr-vehicle-plate');
+  if (plateEl) plateEl.innerText = v.plate_number || v.license_plate || 'KA-01-EMG';
+
+  const priorityEl = document.getElementById('corr-priority-badge');
+  if (priorityEl) priorityEl.innerText = (v.priority_level || 'CODE_RED').replace('_', ' ');
+
+  const incidentEl = document.getElementById('corr-incident-name');
+  if (incidentEl) incidentEl.innerText = v.incident_type || 'Emergency Response';
+
+  const speedEl = document.getElementById('corr-speed-val');
+  if (speedEl) speedEl.innerText = `${v.current_speed_kmh || 60} km/h`;
+
+  const gainEl = document.getElementById('corr-speed-gain');
+  if (gainEl) gainEl.innerText = `+${c.speed_improvement_pct || 42}%`;
+
+  const originEl = document.getElementById('corr-origin-name');
+  if (originEl) originEl.innerText = c.origin_name || 'Emergency Origin';
+
+  const destEl = document.getElementById('corr-destination-name');
+  if (destEl) destEl.innerText = c.destination_name || 'Hospital Trauma Center';
+
+  const statusBadge = document.getElementById('corr-status-badge');
+  if (statusBadge) {
+    if (c.active && (c.preemption_enabled || c.preemption_active)) {
+      statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span class="text-emerald-400 font-mono">GREEN WAVE ACTIVE</span>`;
+    } else if (c.active) {
+      statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span><span class="text-amber-400 font-mono">STANDBY / DISPATCHED</span>`;
+    } else {
+      statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-gray-500"></span><span class="text-gray-400 font-mono">CYCLES RESTORED</span>`;
+    }
+  }
+
+  const preemptCountEl = document.getElementById('corr-preempt-count');
+  if (preemptCountEl && c.junctions) {
+    const greenCount = c.junctions.filter(j => j.signal_state === 'PREEMPTED_GREEN').length;
+    preemptCountEl.innerText = `${greenCount} of ${c.junctions.length} Signals Locked`;
+  }
+
+  const savedTimeEl = document.getElementById('corr-saved-time');
+  if (savedTimeEl) savedTimeEl.innerText = `${c.time_saved_min ?? c.time_saved_minutes ?? 0} min`;
+
+  const etaTimeEl = document.getElementById('corr-eta-time');
+  if (etaTimeEl) etaTimeEl.innerText = `${c.eta_with_corridor_min ?? c.eta_corridor_minutes ?? 0} min`;
+
+  const hudTitle = document.getElementById('map-hud-corridor-title');
+  if (hudTitle) hudTitle.innerText = `Corridor: ${c.origin_name} → ${c.destination_name}`;
+
+  const nextJunc = (c.junctions || []).find(j => (j.estimated_arrival_seconds ?? j.eta_seconds ?? 0) > 0) || (c.junctions || [])[(c.junctions || []).length - 1];
+  const nextEtaEl = document.getElementById('corr-next-eta');
+  if (nextEtaEl && nextJunc) {
+    const nextEtaSec = nextJunc.estimated_arrival_seconds ?? nextJunc.eta_seconds ?? 0;
+    nextEtaEl.innerText = `${nextEtaSec}s to ${nextJunc.junction_name}`;
+  }
+
+  const signalCountEl = document.getElementById('corr-signal-count');
+  if (signalCountEl && c.junctions) signalCountEl.innerText = `${c.junctions.length} Intersections`;
+}
+
+function renderSignalControllersRack(c) {
+  const container = document.getElementById('corridor-signals-list');
+  if (!container) return;
+
+  if (!c.junctions || c.junctions.length === 0) {
+    container.innerHTML = `<div class="p-4 text-center text-gray-500 text-xs font-mono">No downstream signal controllers mapped.</div>`;
+    return;
+  }
+
+  container.innerHTML = c.junctions.map((j, idx) => {
+    const isGreen = j.signal_state === 'PREEMPTED_GREEN';
+    const isFlush = j.signal_state === 'QUEUE_FLUSH';
+    const isHold = j.signal_state === 'ALL_RED_HOLD';
+    const isRecov = j.signal_state === 'TRANSITION_RECOVERY';
+    const distM = Math.round(j.distance_to_junction_meters ?? j.distance_meters ?? 0);
+    const etaSec = j.estimated_arrival_seconds ?? j.eta_seconds ?? 0;
+    const greenWin = j.green_window_duration_seconds ?? j.green_lock_countdown_sec ?? j.time_to_green_lock ?? 45;
+    const queuePct = Math.round(j.queue_clearance_pct ?? j.queue_clearance_percent ?? j.queue_cleared_pct ?? 0);
+
+    let stateBadge = '';
+    if (isGreen) {
+      stateBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-emerald-950 text-emerald-300 border border-emerald-500/50 flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span>PREEMPTED GREEN</span></span>`;
+    } else if (isFlush) {
+      stateBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-amber-950 text-amber-300 border border-amber-500/50 flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span><span>QUEUE FLUSH</span></span>`;
+    } else if (isHold) {
+      stateBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-rose-950 text-rose-300 border border-rose-500/50 flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span><span>ALL-RED HOLD</span></span>`;
+    } else if (isRecov) {
+      stateBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-cyan-950 text-cyan-300 border border-cyan-500/50">TRANSITION RECOVERY</span>`;
+    } else {
+      stateBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-slate-800 text-gray-300 border border-slate-700">NORMAL CYCLE</span>`;
+    }
+
+    const heldStreets = (j.cross_streets_held || []).slice(0, 2).join(', ');
+
+    return `
+      <div class="p-3 bg-slate-950/90 rounded-xl border ${isGreen ? 'border-emerald-500/50 shadow-lg shadow-emerald-950/40' : 'border-slate-800'} space-y-2 transition hover:border-slate-700">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <div class="w-6 h-6 rounded-lg ${isGreen ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-gray-400'} flex items-center justify-center text-[10px] font-bold font-mono border border-slate-700">
+              #${idx + 1}
+            </div>
+            <div>
+              <div class="text-white font-bold text-xs flex items-center space-x-1.5">
+                <span>${j.junction_name}</span>
+                ${j.manual_override ? '<span class="px-1.5 py-0.2 bg-purple-950 text-purple-300 text-[9px] rounded border border-purple-500/40">OVERRIDE</span>' : ''}
+              </div>
+              <div class="text-[10px] text-gray-400 font-mono">${j.junction_id} &bull; ${distM}m downstream</div>
+            </div>
+          </div>
+          <div>${stateBadge}</div>
+        </div>
+
+        <!-- Arrival & Queue Telemetry -->
+        <div class="grid grid-cols-2 gap-2 text-[11px] font-mono bg-slate-900/60 p-2 rounded-lg border border-slate-800/80">
+          <div>
+            <span class="text-gray-400">ETA Countdown:</span>
+            <span class="font-bold ${etaSec <= 30 ? 'text-amber-400' : 'text-cyan-300'} ml-1">${etaSec}s</span>
+          </div>
+          <div>
+            <span class="text-gray-400">Green Window:</span>
+            <span class="font-bold text-emerald-400 ml-1">${greenWin}s</span>
+          </div>
+          <div class="col-span-2 flex items-center justify-between text-[10px]">
+            <span class="text-gray-400">Holding Cross-Streets:</span>
+            <span class="text-rose-400 font-medium truncate max-w-[170px]" title="${heldStreets}">${heldStreets || 'None'}</span>
+          </div>
+        </div>
+
+        <!-- Queue Clearance Progress Bar -->
+        <div class="space-y-1">
+          <div class="flex justify-between text-[10px] font-mono">
+            <span class="text-gray-400">Upstream Queue Flushing</span>
+            <span class="text-emerald-400 font-bold">${queuePct}%</span>
+          </div>
+          <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+            <div class="bg-gradient-to-r from-emerald-500 to-cyan-400 h-1.5 rounded-full transition-all duration-500" style="width: ${queuePct}%"></div>
+          </div>
+        </div>
+
+        <!-- Action Override Buttons -->
+        <div class="flex items-center space-x-1.5 pt-1">
+          <button onclick="overrideSignal('${j.junction_id}', 'FORCE_GREEN')" class="flex-1 py-1 bg-emerald-950/60 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/40 rounded text-[10px] font-bold transition flex items-center justify-center space-x-1">
+            <i class="fa-solid fa-traffic-light text-[9px]"></i>
+            <span>Force Green</span>
+          </button>
+          <button onclick="overrideSignal('${j.junction_id}', 'ADD_BUFFER_30S')" class="flex-1 py-1 bg-slate-900 hover:bg-slate-800 text-amber-300 border border-slate-700 rounded text-[10px] font-bold transition flex items-center justify-center space-x-1">
+            <i class="fa-solid fa-plus text-[9px]"></i>
+            <span>+30s Buffer</span>
+          </button>
+          <button onclick="overrideSignal('${j.junction_id}', 'RELEASE_HOLD')" class="py-1 px-2 bg-slate-900 hover:bg-slate-800 text-gray-400 hover:text-white border border-slate-700 rounded text-[10px] transition" title="Release to Normal Cycle">
+            <i class="fa-solid fa-rotate-left"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderCorridorOnMap(c) {
+  const routeCoordinates = c.route_coordinates || c.gis_polyline || [];
+  if (!corridorMap || routeCoordinates.length === 0) return;
+
+  corridorMarkers.forEach(m => corridorMap.removeLayer(m));
+  corridorMarkers = [];
+
+  if (corridorPolyline) {
+    corridorMap.removeLayer(corridorPolyline);
+    corridorPolyline = null;
+  }
+  if (corridorVehicleMarker) {
+    corridorMap.removeLayer(corridorVehicleMarker);
+    corridorVehicleMarker = null;
+  }
+
+  // Draw Glowing Emerald Polyline
+  corridorPolyline = L.polyline(routeCoordinates, {
+    color: '#10b981',
+    weight: 6,
+    opacity: 0.9,
+    lineCap: 'round',
+    lineJoin: 'round'
+  }).addTo(corridorMap);
+
+  // Add Junction Pins along route
+  (c.junctions || []).forEach((j, i) => {
+    const isGreen = j.signal_state === 'PREEMPTED_GREEN';
+    const pinColor = isGreen ? '#10b981' : (j.signal_state === 'QUEUE_FLUSH' ? '#f59e0b' : '#64748b');
+
+    const pinHtml = `
+      <div style="background-color: ${pinColor}; width: 26px; height: 26px; border-radius: 50%; border: 2px solid #ffffff; box-shadow: 0 0 12px ${pinColor}; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #fff; font-weight: bold;">
+        ${i + 1}
+      </div>
+    `;
+
+    const icon = L.divIcon({
+      className: 'custom-corridor-pin',
+      html: pinHtml,
+      iconSize: [26, 26],
+      iconAnchor: [13, 13]
+    });
+
+    const distM = Math.round(j.distance_to_junction_meters ?? j.distance_meters ?? 0);
+    const etaSec = j.estimated_arrival_seconds ?? j.eta_seconds ?? 0;
+    const marker = L.marker([j.lat, j.lng], { icon: icon }).addTo(corridorMap);
+    marker.bindPopup(`
+      <div class="p-2 space-y-1 text-xs">
+        <div class="font-bold text-white">${j.junction_name}</div>
+        <div class="font-mono text-cyan-300 text-[11px]">${j.junction_id}</div>
+        <div class="text-[11px] font-mono text-emerald-400">State: ${j.signal_state}</div>
+        <div class="text-[10px] text-gray-300">ETA: ${etaSec}s | Dist: ${distM}m</div>
+      </div>
+    `, { className: 'custom-leaflet-popup' });
+    corridorMarkers.push(marker);
+  });
+
+  // Emergency Vehicle Marker
+  const v = c.vehicle || {};
+  const vLat = v.current_lat || (v.current_coords ? v.current_coords[0] : routeCoordinates[0][0]);
+  const vLng = v.current_lng || (v.current_coords ? v.current_coords[1] : routeCoordinates[0][1]);
+
+  const vehicleHtml = `
+    <div style="position: relative; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+      <div style="position: absolute; inset: -4px; border-radius: 50%; background: rgba(16, 185, 129, 0.4); animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+      <div style="width: 32px; height: 32px; border-radius: 50%; background: #020617; border: 2px solid #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.8); display: flex; align-items: center; justify-content: center; color: #10b981; font-size: 14px; position: relative; z-index: 10;">
+        <i class="fa-solid fa-truck-medical"></i>
+      </div>
+    </div>
+  `;
+
+  const vIcon = L.divIcon({
+    className: 'custom-amb-pin',
+    html: vehicleHtml,
+    iconSize: [36, 36],
+    iconAnchor: [18, 18]
+  });
+
+  corridorVehicleMarker = L.marker([vLat, vLng], { icon: vIcon, zIndexOffset: 1000 }).addTo(corridorMap);
+  corridorVehicleMarker.bindPopup(`
+    <div class="p-2 space-y-1 text-xs">
+      <div class="font-bold text-white">${v.callsign || 'Emergency Vehicle'}</div>
+      <div class="font-mono text-cyan-300 text-[11px]">${v.plate_number || v.license_plate || ''}</div>
+      <div class="text-[11px] text-emerald-400 font-bold">Speed: ${v.current_speed_kmh || 60} km/h</div>
+      <div class="text-[10px] text-rose-400 font-bold">${v.priority_level || 'CODE_RED'} - ${v.incident_type || ''}</div>
+    </div>
+  `, { className: 'custom-leaflet-popup' });
+
+  // Destination Hospital Pin
+  const destCoords = routeCoordinates[routeCoordinates.length - 1];
+  const destHtml = `
+    <div style="width: 30px; height: 30px; border-radius: 8px; background: #e11d48; border: 2px solid #ffffff; box-shadow: 0 0 15px rgba(225, 29, 72, 0.8); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px;">
+      <i class="fa-solid fa-hospital"></i>
+    </div>
+  `;
+  const destIcon = L.divIcon({
+    className: 'custom-dest-pin',
+    html: destHtml,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15]
+  });
+  const destMarker = L.marker(destCoords, { icon: destIcon }).addTo(corridorMap);
+  destMarker.bindPopup(`
+    <div class="p-2 space-y-1 text-xs">
+      <div class="font-bold text-white">${c.destination_name}</div>
+      <div class="text-[11px] text-gray-300">Emergency Trauma Destination</div>
+    </div>
+  `, { className: 'custom-leaflet-popup' });
+  corridorMarkers.push(destMarker);
+
+  corridorMap.fitBounds(corridorPolyline.getBounds(), { padding: [40, 40] });
+}
+
+// Preset Scenarios
+window.dispatchCorridorScenario = async function (presetKey) {
+  const presets = {
+    'trauma_cardiac': {
+      vehicle_id: 'VEH-EMG-01',
+      callsign: 'AMB-911 (Cardiac Unit)',
+      plate_number: 'KA-01-EA-9911',
+      vehicle_type: 'AMBULANCE',
+      priority_level: 'CODE_RED',
+      incident_type: 'Severe STEMI Cardiac Arrest & Respiratory Distress',
+      origin_name: 'Indiranagar 100ft Sector Inflow',
+      destination_name: 'Victoria Emergency Trauma Hospital',
+      speed_kmh: 68.0
+    },
+    'fire_4alarm': {
+      vehicle_id: 'VEH-EMG-02',
+      callsign: 'FIRE-04 (Heavy Aerial Platform Engine)',
+      plate_number: 'KA-04-FE-101',
+      vehicle_type: 'FIRE_ENGINE',
+      priority_level: 'CODE_RED',
+      incident_type: '4-Alarm Commercial Structure Fire',
+      origin_name: 'West River Fire HQ',
+      destination_name: 'Koramangala Financial Tech Park',
+      speed_kmh: 62.0
+    },
+    'organ_transport': {
+      vehicle_id: 'VEH-EMG-03',
+      callsign: 'LIFE-01 (Rapid Organ Transport)',
+      plate_number: 'KA-05-OR-5500',
+      vehicle_type: 'ORGAN_TRANSPORT',
+      priority_level: 'CODE_RED',
+      incident_type: 'Zero-Delay Pediatric Donor Heart Transit',
+      origin_name: 'Silk Board Transit Hub',
+      destination_name: 'Trinity Super-Specialty Heart Institute',
+      speed_kmh: 74.0
+    }
+  };
+
+  const payload = presets[presetKey];
+  if (!payload) return;
+
+  ['cardiac', 'fire', 'organ'].forEach(k => {
+    const b = document.getElementById(`btn-scene-${k}`);
+    if (b) {
+      b.classList.remove('bg-emerald-600/30', 'border-emerald-500/40', 'bg-amber-950/50', 'bg-purple-950/50');
+      b.classList.add('bg-slate-900', 'border-slate-700');
+    }
+  });
+
+  const activeBtn = document.getElementById(`btn-scene-${presetKey.includes('cardiac') ? 'cardiac' : (presetKey.includes('fire') ? 'fire' : 'organ')}`);
+  if (activeBtn) {
+    activeBtn.classList.remove('bg-slate-900', 'border-slate-700');
+    activeBtn.classList.add('bg-emerald-600/30', 'border-emerald-500/40');
+  }
+
+  try {
+    const res = await fetch('/api/v1/corridors/dispatch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      const data = await res.json();
+      activeCorridorId = data.corridor_id;
+      loadCorridorData();
+      showCorridorToast(`🚨 Corridor Dispatched: ${data.vehicle.callsign} en route with dynamic preemption`);
+    }
+  } catch (err) {
+    console.error("Dispatch scenario failed:", err);
+  }
+};
+
+window.activateCurrentCorridor = async function () {
+  if (!activeCorridorId) return;
+  try {
+    const res = await fetch(`/api/v1/corridors/${activeCorridorId}/activate`, { method: 'POST' });
+    if (res.ok) {
+      const data = await res.json();
+      currentCorridorData = data;
+      renderCorridorTelematics(data);
+      renderSignalControllersRack(data);
+      renderCorridorOnMap(data);
+      showCorridorToast("⚡ Dynamic Green Wave Preemption ACTIVATED across all downstream controllers!");
+    }
+  } catch (e) {
+    console.error("Failed activate corridor:", e);
+  }
+};
+
+window.simulateCorridorProgress = async function () {
+  if (!activeCorridorId) return;
+  try {
+    const res = await fetch(`/api/v1/corridors/${activeCorridorId}/simulate-step`, { method: 'POST' });
+    if (res.ok) {
+      const data = await res.json();
+      currentCorridorData = data;
+      renderCorridorTelematics(data);
+      renderSignalControllersRack(data);
+      renderCorridorOnMap(data);
+
+      const coords3D = data.route_3d_coordinates || data.waypoints_3d;
+      if (window.show3DGreenCorridor && coords3D && coords3D.length > 0) {
+        const vCoords3D = data.current_step_index !== undefined && coords3D[data.current_step_index] 
+          ? coords3D[data.current_step_index] 
+          : coords3D[0];
+        window.show3DGreenCorridor(coords3D, vCoords3D);
+      }
+      showCorridorToast(`🚗 Advanced vehicle along corridor. Signals synchronized.`);
+    }
+  } catch (e) {
+    console.error("Failed simulate step:", e);
+  }
+};
+
+window.deactivateCurrentCorridor = async function () {
+  if (!activeCorridorId) return;
+  try {
+    const res = await fetch(`/api/v1/corridors/${activeCorridorId}/deactivate`, { method: 'POST' });
+    if (res.ok) {
+      const data = await res.json();
+      currentCorridorData = data;
+      renderCorridorTelematics(data);
+      renderSignalControllersRack(data);
+      renderCorridorOnMap(data);
+      if (window.clear3DGreenCorridor) window.clear3DGreenCorridor();
+      showCorridorToast("🛑 Corridor Deactivated. Downstream signals entering smooth transition recovery.");
+    }
+  } catch (e) {
+    console.error("Failed deactivate corridor:", e);
+  }
+};
+
+window.overrideSignal = async function (junctionId, action) {
+  if (!activeCorridorId) return;
+  try {
+    const res = await fetch(`/api/v1/corridors/${activeCorridorId}/signal-override`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ junction_id: junctionId, override_action: action, override_duration_seconds: 30 })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      currentCorridorData = data;
+      renderSignalControllersRack(data);
+      renderCorridorOnMap(data);
+      showCorridorToast(`Signal ${junctionId} override applied: ${action}`);
+    }
+  } catch (e) {
+    console.error("Override signal error:", e);
+  }
+};
+
+window.viewCorridorIn3DTwin = function () {
+  window.switchTab('3dtwin');
+  if (currentCorridorData && window.show3DGreenCorridor) {
+    setTimeout(() => {
+      const coords3D = currentCorridorData.route_3d_coordinates || currentCorridorData.waypoints_3d;
+      if (coords3D && coords3D.length > 0) {
+        const vCoords3D = currentCorridorData.current_step_index !== undefined && coords3D[currentCorridorData.current_step_index] 
+          ? coords3D[currentCorridorData.current_step_index] 
+          : coords3D[0];
+        window.show3DGreenCorridor(coords3D, vCoords3D);
+      }
+    }, 150);
+  }
+};
+
+window.openCustomDispatchModal = function () {
+  const m = document.getElementById('custom-dispatch-modal');
+  if (m) m.classList.remove('hidden');
+};
+
+window.closeCustomDispatchModal = function () {
+  const m = document.getElementById('custom-dispatch-modal');
+  if (m) m.classList.add('hidden');
+};
+
+window.submitCustomDispatch = async function () {
+  const callsign = document.getElementById('disp-callsign').value;
+  const plate = document.getElementById('disp-plate').value;
+  const vtype = document.getElementById('disp-type').value;
+  const incident = document.getElementById('disp-incident').value;
+  const origin = document.getElementById('disp-origin').value;
+  const dest = document.getElementById('disp-destination').value;
+  const speed = parseFloat(document.getElementById('disp-speed').value) || 65.0;
+
+  const payload = {
+    vehicle_id: `VEH-CUSTOM-${Math.floor(Math.random() * 900 + 100)}`,
+    callsign: callsign || 'EMG-UNIT-ALPHA',
+    plate_number: plate || 'KA-01-XX-0001',
+    license_plate: plate || 'KA-01-XX-0001',
+    vehicle_type: vtype,
+    priority_level: 'CODE_RED',
+    incident_type: incident || 'Emergency Intervention',
+    origin_name: origin,
+    destination_name: dest,
+    speed_kmh: speed
+  };
+
+  try {
+    const res = await fetch('/api/v1/corridors/dispatch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      const data = await res.json();
+      activeCorridorId = data.corridor_id;
+      window.closeCustomDispatchModal();
+      loadCorridorData();
+      showCorridorToast(`Custom Corridor Dispatched: ${data.vehicle.callsign}`);
+    }
+  } catch (err) {
+    console.error("Submit custom dispatch error:", err);
+  }
+};
+
+function showCorridorToast(msg) {
+  let toast = document.getElementById('corridor-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'corridor-toast';
+    toast.className = 'fixed bottom-8 right-8 z-[9999] px-4 py-3 bg-emerald-950/95 border border-emerald-500 rounded-xl text-emerald-300 font-bold text-xs shadow-2xl flex items-center space-x-2 animate-bounce';
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = `<i class="fa-solid fa-truck-medical text-emerald-400"></i><span>${msg}</span>`;
+  setTimeout(() => { if (toast) toast.remove(); }, 4000);
+}
+

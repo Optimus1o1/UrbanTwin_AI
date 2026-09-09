@@ -12,7 +12,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.core.config import settings
 from app.core.rate_limiter import limiter
-from app.api.v1 import auth, cameras, traffic, vehicles, roads, predictions, anomalies, simulation
+from app.api.v1 import auth, cameras, traffic, vehicles, roads, predictions, anomalies, simulation, corridor
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -129,6 +129,7 @@ def custom_openapi():
         {"name": "Predictions", "description": "AI-powered congestion forecasts and predictive travel-time metrics."},
         {"name": "Anomalies", "description": "Incident detection (accidents, stalled vehicles, lane blockages) and dispatch."},
         {"name": "Simulation", "description": "What-if scenario modeling: road closures, signal timing adjustments, and evacuation routing."},
+        {"name": "Green Corridor", "description": "Emergency vehicle tracking, dynamic green wave preemption, and signal automation."},
         {"name": "Health", "description": "Service health probes and cluster uptime telemetry."}
     ]
 
@@ -218,6 +219,7 @@ app.include_router(roads.router, prefix=settings.API_V1_STR)
 app.include_router(predictions.router, prefix=settings.API_V1_STR)
 app.include_router(anomalies.router, prefix=settings.API_V1_STR)
 app.include_router(simulation.router, prefix=settings.API_V1_STR)
+app.include_router(corridor.router, prefix=settings.API_V1_STR)
 
 # Mount Dashboard Static Web App
 if STATIC_DIR.exists():

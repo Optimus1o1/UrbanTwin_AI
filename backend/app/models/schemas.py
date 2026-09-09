@@ -323,3 +323,131 @@ class RouteAnomalyAlert(BaseModel):
     detection_timestamp: str
     cameras_involved: List[str]
     confidence: float
+
+# --- Emergency Vehicle Green Corridor Schemas ---
+class EmergencyVehicleType(str, Enum):
+    AMBULANCE = "AMBULANCE"
+    FIRE_ENGINE = "FIRE_ENGINE"
+    POLICE_TACTICAL = "POLICE_TACTICAL"
+    ORGAN_TRANSPORT = "ORGAN_TRANSPORT"
+
+class SignalPreemptionState(str, Enum):
+    NORMAL_CYCLE = "NORMAL_CYCLE"
+    ALL_RED_HOLD = "ALL_RED_HOLD"
+    PREEMPTED_GREEN = "PREEMPTED_GREEN"
+    QUEUE_FLUSH = "QUEUE_FLUSH"
+    TRANSITION_RECOVERY = "TRANSITION_RECOVERY"
+
+SignalControllerState = SignalPreemptionState
+
+class EmergencyVehicle(BaseModel):
+    vehicle_id: str
+    callsign: str
+    plate_number: str
+    license_plate: Optional[str] = None
+    vehicle_type: EmergencyVehicleType
+    priority_level: str = "CODE_RED" # CODE_RED, PRIORITY_1, URGENT
+    incident_type: str
+    current_location_name: str
+    current_lat: float
+    current_lng: float
+    current_coords: Optional[List[float]] = None # [lat, lng]
+    current_speed_kmh: float
+    heading_deg: float = 0.0
+    destination_name: str
+    destination_lat: float
+    destination_lng: float
+    destination_coords: Optional[List[float]] = None # [lat, lng]
+    assigned_hospital_or_station: str
+    status: str = "DISPATCHED" # DISPATCHED, EN_ROUTE, ON_SCENE, COMPLETED
+    eta_seconds: Optional[int] = None
+
+class JunctionSignalControl(BaseModel):
+    junction_id: str
+    junction_name: str
+    lat: float
+    lng: float
+    coords: Optional[List[float]] = None # [lat, lng]
+    x_3d: float
+    z_3d: float
+    coords_3d: Optional[List[float]] = None # [x, y, z]
+    distance_meters: float
+    distance_to_junction_meters: Optional[float] = None
+    eta_seconds: int
+    estimated_arrival_seconds: Optional[int] = None
+    signal_state: SignalPreemptionState
+    preemption_active: bool
+    cross_streets_held: List[str]
+    cross_street_hold: bool = True
+    green_lock_countdown_sec: int
+    time_to_green_lock: int = 0
+    green_window_duration_seconds: Optional[int] = None
+    queue_cleared_pct: float
+    queue_clearance_percent: float = 0.0
+    queue_clearance_pct: Optional[float] = None
+    queue_length_meters: float = 45.0
+    manual_override: bool = False
+    can_override: bool = True
+
+class GreenCorridorRoute(BaseModel):
+    corridor_id: str
+    incident_id: str
+    vehicle: EmergencyVehicle
+    origin_name: str
+    destination_name: str
+    total_distance_km: float
+    eta_without_corridor_min: float
+    eta_with_corridor_min: float
+    eta_normal_minutes: Optional[float] = None
+    eta_corridor_minutes: Optional[float] = None
+    time_saved_min: float
+    time_saved_minutes: Optional[float] = None
+    speed_improvement_pct: float
+    active: bool = True
+    preemption_enabled: bool = False
+    preemption_active: bool = False
+    junctions: List[JunctionSignalControl]
+    route_coordinates: List[List[float]] # [[lat, lng], ...] for Leaflet polyline
+    gis_polyline: Optional[List[List[float]]] = None
+    route_3d_coordinates: List[List[float]] # [[x, y, z], ...] for Three.js 3D tube
+    waypoints_3d: Optional[List[List[float]]] = None
+    current_step_index: int = 0
+    created_at: str
+    updated_at: str
+
+class CorridorDispatchRequest(BaseModel):
+    scenario_preset: Optional[str] = None # trauma_cardiac, fire_4alarm, organ_transport
+    callsign: Optional[str] = "AMB-911"
+    plate_number: Optional[str] = "KA-01-EA-9911"
+    license_plate: Optional[str] = None
+    vehicle_type: EmergencyVehicleType = EmergencyVehicleType.AMBULANCE
+    priority_level: Optional[str] = "CODE_RED"
+    incident_type: str = "Severe Cardiac Arrest - STEMI"
+    origin_name: str = "Indiranagar 100ft Junction"
+    origin_coords: Optional[List[float]] = None
+    destination_name: str = "Victoria Emergency Trauma Hospital"
+    destination_coords: Optional[List[float]] = None
+    speed_kmh: float = 65.0
+    auto_activate: Optional[bool] = False
+
+class SignalOverrideRequest(BaseModel):
+    junction_id: str
+    action: Optional[str] = "FORCE_GREEN" # FORCE_GREEN, EXTEND_30S, CLEAR_NORMAL, ADD_BUFFER_30S, RELEASE_HOLD
+    override_action: Optional[str] = None
+    override_duration_seconds: Optional[int] = 30
+    extend_seconds: Optional[int] = None
+    reason: Optional[str] = "First responder manual corridor clearance"
+
+class CorridorTelemetry(BaseModel):
+    active_corridors_count: int
+    total_interventions_today: int
+    total_active_corridors_today: Optional[int] = None
+    total_emergency_runs_today: Optional[int] = None
+    avg_minutes_saved: float
+    average_time_saved_per_run_min: Optional[float] = None
+    average_time_saved_minutes: Optional[float] = None
+    total_lives_accelerated: int
+    preemption_success_rate_pct: float
+    signal_preemption_success_rate: Optional[float] = None
+    active_preempted_signals: int
+

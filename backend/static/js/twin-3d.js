@@ -1615,6 +1615,131 @@
     `;
   }
 
+  // =========================================================================
+  // EMERGENCY GREEN CORRIDOR 3D VISUALIZATION
+  // =========================================================================
+  let greenCorridorGroup = null;
+
+  window.show3DGreenCorridor = function (waypoints3D, vehicleCoords3D) {
+    if (!scene) return;
+    if (greenCorridorGroup) {
+      scene.remove(greenCorridorGroup);
+      greenCorridorGroup = null;
+    }
+
+    if (!waypoints3D || waypoints3D.length < 2) return;
+
+    greenCorridorGroup = new THREE.Group();
+    greenCorridorGroup.name = 'greenCorridorGroup';
+
+    // 1. CatmullRomCurve3 through 3D waypoints
+    const points = waypoints3D.map(pt => new THREE.Vector3(pt[0], (pt[1] !== undefined ? pt[1] : 0) + 0.45, pt[2] !== undefined ? pt[2] : (pt[1] || 0)));
+    const curve = new THREE.CatmullRomCurve3(points);
+
+    // 2. High-intensity Emerald Laser Tube
+    const tubeGeo = new THREE.TubeGeometry(curve, 64, 0.45, 8, false);
+    const tubeMat = new THREE.MeshBasicMaterial({
+      color: 0x10b981,
+      transparent: true,
+      opacity: 0.85
+    });
+    const tubeMesh = new THREE.Mesh(tubeGeo, tubeMat);
+    greenCorridorGroup.add(tubeMesh);
+
+    // 3. Volumetric Outer Aura Glow Tube
+    const auraGeo = new THREE.TubeGeometry(curve, 64, 0.95, 8, false);
+    const auraMat = new THREE.MeshBasicMaterial({
+      color: 0x34d399,
+      transparent: true,
+      opacity: 0.22,
+      wireframe: true
+    });
+    const auraMesh = new THREE.Mesh(auraGeo, auraMat);
+    greenCorridorGroup.add(auraMesh);
+
+    // 4. Preempted Junction Beacons
+    waypoints3D.forEach((pt) => {
+      const beaconGroup = new THREE.Group();
+      const bx = pt[0];
+      const by = (pt[1] !== undefined ? pt[1] : 0) + 0.1;
+      const bz = pt[2] !== undefined ? pt[2] : (pt[1] || 0);
+
+      // Green Light Column Beacon
+      const pillarGeo = new THREE.CylinderGeometry(0.2, 0.6, 6.0, 16);
+      const pillarMat = new THREE.MeshBasicMaterial({
+        color: 0x10b981,
+        transparent: true,
+        opacity: 0.55
+      });
+      const pillar = new THREE.Mesh(pillarGeo, pillarMat);
+      pillar.position.set(bx, by + 3.0, bz);
+      beaconGroup.add(pillar);
+
+      // Ground Pulsing Rings
+      const ringGeo = new THREE.RingGeometry(0.8, 2.5, 32);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0x10b981,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.8
+      });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = Math.PI / 2;
+      ring.position.set(bx, by + 0.1, bz);
+      beaconGroup.add(ring);
+
+      greenCorridorGroup.add(beaconGroup);
+    });
+
+    // 5. Moving Emergency Vehicle 3D Model Marker
+    const vPos = vehicleCoords3D ? new THREE.Vector3(vehicleCoords3D[0], (vehicleCoords3D[1] || 0) + 0.5, vehicleCoords3D[2] || vehicleCoords3D[1] || 0) : points[0];
+    const ambGroup = new THREE.Group();
+    ambGroup.position.copy(vPos);
+
+    // Vehicle Body
+    const bodyGeo = new THREE.BoxGeometry(1.6, 1.0, 3.0);
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.6, roughness: 0.2 });
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.position.y = 0.5;
+    ambGroup.add(body);
+
+    // Red Cross / Stripe Decal
+    const stripeGeo = new THREE.BoxGeometry(1.65, 0.3, 2.2);
+    const stripeMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+    const stripe = new THREE.Mesh(stripeGeo, stripeMat);
+    stripe.position.y = 0.5;
+    ambGroup.add(stripe);
+
+    // Flashing Emergency Siren Beacons
+    const redLightGeo = new THREE.SphereGeometry(0.2, 8, 8);
+    const redLightMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+    const redLight = new THREE.Mesh(redLightGeo, redLightMat);
+    redLight.position.set(-0.4, 1.15, 0.4);
+    ambGroup.add(redLight);
+
+    const blueLightGeo = new THREE.SphereGeometry(0.2, 8, 8);
+    const blueLightMat = new THREE.MeshBasicMaterial({ color: 0x3b82f6 });
+    const blueLight = new THREE.Mesh(blueLightGeo, blueLightMat);
+    blueLight.position.set(0.4, 1.15, 0.4);
+    ambGroup.add(blueLight);
+
+    greenCorridorGroup.add(ambGroup);
+    scene.add(greenCorridorGroup);
+
+    // Focus camera on corridor center
+    const midIdx = Math.floor(points.length / 2);
+    const centerPt = points[midIdx];
+    setCameraFocus(centerPt.x - 18, 22, centerPt.z + 24, centerPt.x, 0, centerPt.z);
+    cameraMode = 'corridor';
+  };
+
+  window.clear3DGreenCorridor = function () {
+    if (scene && greenCorridorGroup) {
+      scene.remove(greenCorridorGroup);
+      greenCorridorGroup = null;
+    }
+  };
+
   function onWindowResize() {
     if (!container || !camera || !renderer) return;
     camera.aspect = container.clientWidth / (container.clientHeight || 520);

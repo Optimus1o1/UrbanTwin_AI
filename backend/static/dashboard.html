@@ -81,7 +81,7 @@
       box-shadow: 0 0 20px rgba(16, 185, 129, 0.35);
     }
 
-    #city-map, #trajectory-map {
+    #city-map, #trajectory-map, #corridor-map {
       height: 480px;
       width: 100%;
       border-radius: 0.75rem;
@@ -158,6 +158,11 @@
       <button onclick="switchTab('tracking')" id="nav-tracking" class="tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
         <i class="fa-solid fa-route text-cyan-400"></i>
         <span>Trajectory Tracker</span>
+      </button>
+      <button onclick="switchTab('corridor')" id="nav-corridor" class="tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+        <i class="fa-solid fa-truck-medical text-emerald-400"></i>
+        <span>Green Corridor</span>
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
       </button>
       <button onclick="switchTab('macro')" id="nav-macro" class="tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
         <i class="fa-solid fa-chart-network text-amber-400"></i>
@@ -545,6 +550,285 @@
               <canvas id="trajectory-speed-chart"></canvas>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB: DYNAMIC EMERGENCY GREEN CORRIDOR ==================== -->
+    <div id="tab-corridor" class="tab-content hidden space-y-6">
+      <!-- Top Emergency Incident Quick Dispatch & Telemetry Bar -->
+      <div class="glass-card p-4 border border-emerald-500/30 space-y-4 bg-gradient-to-r from-slate-950 via-slate-900 to-emerald-950/20">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-lg shadow glow-emerald">
+              <i class="fa-solid fa-truck-medical animate-pulse"></i>
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <h3 class="font-bold text-white text-sm brand-font">Dynamic Emergency Vehicle Green Corridor Routing</h3>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 animate-pulse">AUTONOMOUS PREEMPTION</span>
+              </div>
+              <p class="text-[11px] text-gray-400">First responder intervention system connecting ANPR/GPS tracking directly with downstream traffic signal controllers</p>
+            </div>
+          </div>
+
+          <!-- Quick Scenario Presets -->
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-[11px] text-gray-400 font-mono uppercase font-bold mr-1">Scenario Presets:</span>
+            <button onclick="dispatchCorridorScenario('trauma_cardiac')" id="btn-scene-cardiac" class="px-3 py-1.5 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border border-emerald-500/40 text-xs font-semibold transition flex items-center space-x-1.5 shadow">
+              <i class="fa-solid fa-heart-pulse text-rose-400"></i>
+              <span>AMB-911 Cardiac Run</span>
+            </button>
+            <button onclick="dispatchCorridorScenario('fire_4alarm')" id="btn-scene-fire" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-amber-950/50 text-amber-300 border border-slate-700 text-xs font-semibold transition flex items-center space-x-1.5">
+              <i class="fa-solid fa-fire text-amber-400"></i>
+              <span>FIRE-04 4-Alarm</span>
+            </button>
+            <button onclick="dispatchCorridorScenario('organ_transport')" id="btn-scene-organ" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-purple-950/50 text-purple-300 border border-slate-700 text-xs font-semibold transition flex items-center space-x-1.5">
+              <i class="fa-solid fa-dna text-purple-400"></i>
+              <span>LIFE-01 Organ Transit</span>
+            </button>
+            <button onclick="openCustomDispatchModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 text-xs font-semibold transition flex items-center space-x-1.5">
+              <i class="fa-solid fa-plus text-xs"></i>
+              <span>Custom Dispatch</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Vehicle Telematics Strip -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
+          <div class="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+            <div class="text-gray-400 text-[10px] font-mono">CALLSIGN / PLATE</div>
+            <div class="text-white font-bold text-sm font-mono flex items-center space-x-1.5">
+              <span id="corr-vehicle-callsign">AMB-911 (Cardiac Unit)</span>
+            </div>
+            <div class="text-cyan-400 font-mono text-[11px]" id="corr-vehicle-plate">KA-01-EA-9911</div>
+          </div>
+
+          <div class="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+            <div class="text-gray-400 text-[10px] font-mono">INCIDENT PRIORITY</div>
+            <div class="text-rose-400 font-bold text-sm flex items-center space-x-1">
+              <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping mr-1"></span>
+              <span id="corr-priority-badge">CODE RED</span>
+            </div>
+            <div class="text-gray-300 text-[11px] truncate" id="corr-incident-name">STEMI Cardiac Arrest</div>
+          </div>
+
+          <div class="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+            <div class="text-gray-400 text-[10px] font-mono">TELEMETRIC SPEED</div>
+            <div class="text-emerald-400 font-bold text-sm font-mono" id="corr-speed-val">64.5 km/h</div>
+            <div class="text-gray-400 text-[10px]">Speed Gain: <span class="text-emerald-300 font-bold" id="corr-speed-gain">+181%</span></div>
+          </div>
+
+          <div class="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+            <div class="text-gray-400 text-[10px] font-mono">ORIGIN &rarr; DESTINATION</div>
+            <div class="text-gray-300 font-medium text-[11px] truncate" id="corr-origin-name">Indiranagar 100ft</div>
+            <div class="text-white font-bold text-[11px] truncate flex items-center space-x-1 text-emerald-400">
+              <i class="fa-solid fa-hospital text-[10px]"></i>
+              <span id="corr-destination-name">Victoria Emergency Trauma</span>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+            <div class="text-gray-400 text-[10px] font-mono">CORRIDOR STATUS</div>
+            <div class="text-sm font-bold flex items-center space-x-1.5" id="corr-status-badge">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span class="text-emerald-400 font-mono">GREEN WAVE ACTIVE</span>
+            </div>
+            <div class="text-gray-400 text-[10px]" id="corr-preempt-count">4 Signals Locked</div>
+          </div>
+
+          <div class="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800 flex flex-col justify-center">
+            <div class="text-gray-400 text-[10px] font-mono">CRITICAL TIME SAVED</div>
+            <div class="text-xl font-extrabold text-emerald-400 brand-font" id="corr-saved-time">9.4 min</div>
+            <div class="text-[10px] text-gray-300">Transit: <span class="text-cyan-300 font-mono" id="corr-eta-time">4.2 min</span> (vs 13.6m)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Cockpit Layout: 2D GIS Map (Left) + Signal Automation Rack (Right) -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left: Leaflet 2D GIS Live Tracking Map (2 Cols) -->
+        <div class="lg:col-span-2 glass-card p-4 space-y-3">
+          <div class="flex flex-wrap items-center justify-between pb-2 border-b border-slate-800 gap-2">
+            <div class="text-xs font-bold text-white flex items-center space-x-2">
+              <i class="fa-solid fa-map-location-dot text-emerald-400"></i>
+              <span>Real-Time GIS Emergency Corridor & Dynamic Signal Clearance</span>
+            </div>
+            <div class="flex items-center space-x-2 text-xs">
+              <span class="text-gray-400 text-[11px] font-mono">Next Junction Arrival:</span>
+              <span class="font-bold text-amber-300 font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-700" id="corr-next-eta">32s to Domlur Interchange</span>
+            </div>
+          </div>
+
+          <!-- Action Control Toolbar -->
+          <div class="flex flex-wrap items-center justify-between bg-slate-950/90 p-3 rounded-xl border border-slate-800 gap-2">
+            <div class="flex flex-wrap items-center gap-2 text-xs">
+              <button onclick="activateCurrentCorridor()" id="btn-activate-wave" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition flex items-center space-x-1.5 shadow glow-emerald">
+                <i class="fa-solid fa-bolt"></i>
+                <span>Activate Dynamic Green Wave</span>
+              </button>
+              <button onclick="simulateCorridorProgress()" id="btn-step-progress" class="px-3.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold transition flex items-center space-x-1.5 shadow">
+                <i class="fa-solid fa-forward-step"></i>
+                <span>Advance Vehicle Progress</span>
+              </button>
+              <button onclick="deactivateCurrentCorridor()" id="btn-deactivate-wave" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-rose-950/60 text-gray-300 hover:text-rose-300 border border-slate-700 text-xs font-medium transition flex items-center space-x-1">
+                <i class="fa-solid fa-power-off text-rose-400"></i>
+                <span>Restore Normal Cycles</span>
+              </button>
+            </div>
+
+            <div class="flex items-center space-x-2 text-xs">
+              <button onclick="viewCorridorIn3DTwin()" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-bold transition flex items-center space-x-1.5 shadow">
+                <i class="fa-solid fa-cube"></i>
+                <span>View in 3D City Twin</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Leaflet GIS Map Container -->
+          <div class="relative h-[480px] w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shadow-inner">
+            <div id="corridor-map" class="w-full h-full"></div>
+
+            <!-- In-Map Live Telemetry Overlay -->
+            <div class="absolute top-3 left-3 z-[500] pointer-events-auto bg-slate-950/90 backdrop-blur-md p-3 rounded-xl border border-emerald-500/40 text-xs space-y-1.5 max-w-xs shadow-xl">
+              <div class="flex items-center justify-between border-b border-slate-800 pb-1">
+                <span class="text-[10px] text-gray-400 font-mono font-bold uppercase">Preemption Status</span>
+                <span class="pulse-dot"></span>
+              </div>
+              <div class="text-white font-bold text-xs flex items-center space-x-1.5">
+                <i class="fa-solid fa-traffic-light text-emerald-400"></i>
+                <span id="map-hud-corridor-title">Corridor: Indiranagar &rarr; Victoria</span>
+              </div>
+              <div class="flex justify-between text-[11px] font-mono">
+                <span class="text-gray-400">Cross-Streets:</span>
+                <span class="text-rose-400 font-bold" id="map-hud-held-streets">ALL-RED HOLD (3 Intersections)</span>
+              </div>
+              <div class="flex justify-between text-[11px] font-mono">
+                <span class="text-gray-400">Queue Flush Index:</span>
+                <span class="text-emerald-400 font-bold" id="map-hud-queue-flush">98% Cleared</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Downstream Signal Automation Rack & First Responder HUD (1 Col) -->
+        <div class="space-y-4 flex flex-col justify-between">
+          <!-- Downstream Signal Controller Rack -->
+          <div class="glass-card p-4 space-y-3 flex-1 flex flex-col">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+              <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-traffic-light text-cyan-400"></i>
+                <span class="text-xs font-bold text-white uppercase tracking-wider">Downstream Signal Controllers</span>
+              </div>
+              <span class="text-[10px] text-gray-400 font-mono" id="corr-signal-count">4 Intersections</span>
+            </div>
+
+            <!-- Signal Cards Container (Populated via JS) -->
+            <div id="corridor-signals-list" class="space-y-2.5 overflow-y-auto max-h-[460px] pr-1 flex-1">
+              <!-- Dynamically populated via app.js -->
+            </div>
+          </div>
+
+          <!-- Macro Life-Saving Impact Metrics -->
+          <div class="glass-card p-4 border border-emerald-500/20 space-y-3 bg-gradient-to-br from-slate-950 to-emerald-950/20">
+            <div class="text-xs font-bold text-white flex items-center justify-between border-b border-slate-800 pb-2">
+              <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-gauge-high text-emerald-400"></i>
+                <span>First Responder Citywide Telemetry</span>
+              </div>
+              <span class="text-[10px] text-emerald-400 font-mono">Live Sync</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-center">
+              <div class="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800/80">
+                <div class="text-gray-400 text-[10px] font-mono">TODAY'S RUNS</div>
+                <div class="text-lg font-extrabold text-white font-mono" id="corr-macro-runs">14 Incidents</div>
+                <div class="text-[10px] text-emerald-400 font-medium">100% Signal Success</div>
+              </div>
+              <div class="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800/80">
+                <div class="text-gray-400 text-[10px] font-mono">AVG MIN SAVED</div>
+                <div class="text-lg font-extrabold text-emerald-400 font-mono" id="corr-macro-mins">9.4 min</div>
+                <div class="text-[10px] text-gray-400 font-medium">Per Critical Run</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Dispatch Modal -->
+    <div id="custom-dispatch-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+      <div class="glass-card p-6 border border-emerald-500/40 rounded-2xl max-w-lg w-full space-y-4 bg-slate-950 shadow-2xl animate-fade-in">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div class="flex items-center space-x-2.5">
+            <i class="fa-solid fa-truck-medical text-emerald-400 text-lg"></i>
+            <h3 class="font-bold text-white text-base brand-font">Dispatch Emergency Green Corridor</h3>
+          </div>
+          <button onclick="closeCustomDispatchModal()" class="text-gray-400 hover:text-white transition">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+
+        <div class="space-y-3 text-xs">
+          <div>
+            <label class="block font-mono text-gray-300 mb-1">Vehicle Callsign:</label>
+            <input type="text" id="disp-callsign" value="AMB-505 (Trauma Unit)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white font-mono focus:border-emerald-400 focus:outline-none" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-mono text-gray-300 mb-1">License Plate (ANPR):</label>
+              <input type="text" id="disp-plate" value="KA-03-EM-5050" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white font-mono uppercase focus:border-emerald-400 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block font-mono text-gray-300 mb-1">Vehicle Type:</label>
+              <select id="disp-type" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:border-emerald-400 focus:outline-none">
+                <option value="AMBULANCE" selected>Ambulance (Life Support)</option>
+                <option value="FIRE_ENGINE">Fire Engine (Heavy Aerial)</option>
+                <option value="ORGAN_TRANSPORT">Organ Transport Unit</option>
+                <option value="POLICE_TACTICAL">Police Tactical Escort</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-mono text-gray-300 mb-1">Incident Description:</label>
+            <input type="text" id="disp-incident" value="Critical Trauma Inflow - Code Red" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:border-emerald-400 focus:outline-none" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-mono text-gray-300 mb-1">Origin Node:</label>
+              <select id="disp-origin" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:border-emerald-400 focus:outline-none">
+                <option value="Indiranagar 100ft Sector Inflow" selected>Indiranagar 100ft Crossing</option>
+                <option value="West River Fire HQ">West River Gateway</option>
+                <option value="Silk Board Interchange">Silk Board Transit Hub</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-mono text-gray-300 mb-1">Destination Facility:</label>
+              <select id="disp-destination" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:border-emerald-400 focus:outline-none">
+                <option value="Victoria Emergency Trauma Hospital" selected>Victoria Emergency Trauma</option>
+                <option value="Trinity Super-Specialty Heart Institute">Trinity Heart Institute</option>
+                <option value="Koramangala Financial Tech Park">Koramangala Tech Park</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-mono text-gray-300 mb-1">Emergency Speed Target (km/h):</label>
+            <input type="number" id="disp-speed" value="65" min="40" max="90" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white font-mono focus:border-emerald-400 focus:outline-none" />
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-3 pt-2">
+          <button onclick="submitCustomDispatch()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs transition shadow glow-emerald flex items-center justify-center space-x-1.5">
+            <i class="fa-solid fa-satellite-dish"></i>
+            <span>Calculate Route & Preempt Signals</span>
+          </button>
+          <button onclick="closeCustomDispatchModal()" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-gray-300 rounded-lg text-xs transition border border-slate-700">
+            Cancel
+          </button>
         </div>
       </div>
     </div>
