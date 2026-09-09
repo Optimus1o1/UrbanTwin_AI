@@ -1,0 +1,38 @@
+# Version control
+.git
+.github
+.gitignore
+
+# IDE & Editor files
+.vscode
+.idea
+*.sublime-project
+*.sublime-workspace
+
+# Testing and caches
+.pytest_cache
+backend/.pytest_cache
+__pycache__
+*/__pycache__
+*/*/__pycache__
+*/*/*/__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+# Local environment and secret files
+.env
+.env.local
+.env.*.local
+
+# Node and UI build artifacts
+node_modules
+dist
+build
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Documentation notebooks and guides that aren't needed inside the runtime image
+*.ipynb
