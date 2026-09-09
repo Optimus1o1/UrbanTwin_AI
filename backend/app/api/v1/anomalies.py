@@ -1,8 +1,12 @@
 from typing import List, Dict, Any
 from fastapi import APIRouter, Request, HTTPException
-from app.models.schemas import Anomaly, BlacklistAlert, BlacklistEntry, RouteAnomalyAlert
+from app.models.schemas import (
+    Anomaly, BlacklistAlert, BlacklistEntry, RouteAnomalyAlert,
+    PatternOfLifeThreat, RadarSummaryStats, ThreatSimulationRequest
+)
 from app.services.anomaly_service import get_active_anomalies
 from app.services.alert_service import AlertService
+from app.services.behavioral_radar_service import BehavioralRadarService
 from app.core.rate_limiter import limiter
 
 router = APIRouter(prefix="/anomalies", tags=["Alert System & Hotlist Enforcement"])
@@ -31,6 +35,34 @@ def get_route_anomalies(request: Request):
     Flags cloned/ghost plates (impossible spatial-temporal velocity) and circuitous loitering loops.
     """
     return AlertService.get_route_anomalies()
+
+# --- Real-Time Vehicle Anomaly & Pattern-of-Life Radar Endpoints ---
+@router.get("/radar/threats", response_model=List[PatternOfLifeThreat])
+@limiter.limit("60/minute")
+def get_radar_behavioral_threats(request: Request):
+    """
+    Real-Time Pattern-of-Life Radar Feed:
+    Emits autonomously detected behavioral anomalies across 3 threat vectors:
+    - Plate Swapping / Cloning (impossible physical velocity across distant cameras)
+    - Tactical Convoys / Following (tightly correlated headway across disjoint nodes)
+    - Loitering / Surveillance Vectors (recurrent loops around sensitive infrastructure)
+    """
+    return BehavioralRadarService.get_all_threats()
+
+@router.get("/radar/stats", response_model=RadarSummaryStats)
+@limiter.limit("60/minute")
+def get_radar_summary_statistics(request: Request):
+    """Retrieve aggregate radar metrics including active threats, distribution breakdown, and average anomaly Z-scores."""
+    return BehavioralRadarService.get_radar_stats()
+
+@router.post("/radar/simulate", response_model=PatternOfLifeThreat)
+@limiter.limit("30/minute")
+def simulate_behavioral_threat(request: Request, sim_req: ThreatSimulationRequest):
+    """
+    Operator Simulation Trigger:
+    Injects synthetic behavioral anomaly patterns into the radar pipeline for live tactical drills.
+    """
+    return BehavioralRadarService.simulate_threat(sim_req)
 
 @router.get("/registry", response_model=List[BlacklistEntry])
 @limiter.limit("60/minute")

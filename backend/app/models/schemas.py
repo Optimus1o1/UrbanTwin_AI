@@ -473,3 +473,58 @@ class CorridorTelemetry(BaseModel):
     signal_preemption_success_rate: Optional[float] = None
     active_preempted_signals: int
 
+# --- Real-Time Behavioral Anomaly & Pattern-of-Life Radar Schemas ---
+class BehavioralThreatType(str, Enum):
+    PLATE_CLONING = "PLATE_CLONING"
+    TACTICAL_CONVOY = "TACTICAL_CONVOY"
+    SURVEILLANCE_LOITERING = "SURVEILLANCE_LOITERING"
+
+class BehavioralThreatSeverity(str, Enum):
+    CRITICAL = "CRITICAL"
+    HIGH = "HIGH"
+    ELEVATED = "ELEVATED"
+
+class BehavioralEvidence(BaseModel):
+    metric_name: str
+    observed_value: str
+    baseline_threshold: str
+    physical_discrepancy: str
+    anomaly_z_score: float = 4.2
+    model_confidence: float = 0.96
+    details: Dict[str, Any] = {}
+
+class PatternOfLifeThreat(BaseModel):
+    threat_id: str
+    threat_type: BehavioralThreatType
+    threat_title: str
+    severity: BehavioralThreatSeverity
+    primary_plate: str
+    primary_vehicle_desc: str
+    secondary_plate: Optional[str] = None
+    secondary_vehicle_desc: Optional[str] = None
+    evidence: BehavioralEvidence
+    cameras_involved: List[str]
+    camera_names: List[str]
+    sector: str = "Central Business & Government Corridor"
+    radar_angle_deg: float # Azimuth angle 0-360 for radar scope
+    radar_distance_km: float # Distance from radar origin
+    route_coordinates: List[List[float]] = [] # [[lat, lng], ...]
+    detection_timestamp: str
+    intercept_recommended: bool = True
+    suggested_action: str
+    status: str = "ACTIVE_TRACKING"
+
+class RadarSummaryStats(BaseModel):
+    total_active_threats: int
+    plate_clones_count: int
+    convoys_tracked_count: int
+    loitering_surveillance_count: int
+    mean_anomaly_score: float
+    high_threat_nodes: List[str]
+    radar_status: str = "ONLINE_SWEEPING"
+
+class ThreatSimulationRequest(BaseModel):
+    threat_type: BehavioralThreatType = BehavioralThreatType.PLATE_CLONING
+    primary_plate: Optional[str] = None
+    secondary_plate: Optional[str] = None
+

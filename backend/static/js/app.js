@@ -833,9 +833,409 @@ async function loadAlerts() {
         `).join('');
       }
     }
+
+    // Load Behavioral Radar threats & stats
+    await loadBehavioralThreats();
+    if (!window.radarCanvasInitialized) {
+      initBehavioralRadar();
+    }
   } catch (e) {
     console.warn("Failed loading alerts:", e);
   }
+}
+
+// =========================================================================
+// REAL-TIME VEHICLE ANOMALY & PATTERN-OF-LIFE RADAR ENGINE
+// =========================================================================
+let activeRadarThreats = [];
+let currentRadarFilter = 'ALL';
+let radarSweepAngle = 0;
+let radarAnimFrame = null;
+window.radarCanvasInitialized = false;
+
+async function loadBehavioralThreats() {
+  try {
+    const [threatsRes, statsRes] = await Promise.all([
+      fetch('/api/v1/anomalies/radar/threats'),
+      fetch('/api/v1/anomalies/radar/stats')
+    ]);
+
+    if (statsRes.ok) {
+      const stats = await statsRes.json();
+      const tEl = document.getElementById('radar-stat-threats');
+      if (tEl) tEl.innerText = `${stats.total_active_threats} Active`;
+      const cEl = document.getElementById('radar-stat-clones');
+      if (cEl) cEl.innerText = stats.plate_clones_count;
+      const cnvEl = document.getElementById('radar-stat-convoys');
+      if (cnvEl) cnvEl.innerText = stats.convoys_tracked_count;
+      const lEl = document.getElementById('radar-stat-loiter');
+      if (lEl) lEl.innerText = stats.loitering_surveillance_count;
+      const zEl = document.getElementById('radar-stat-zscore');
+      if (zEl) zEl.innerText = `+${stats.mean_anomaly_score}σ Outlier`;
+    }
+
+    if (threatsRes.ok) {
+      activeRadarThreats = await threatsRes.json();
+      renderRadarThreatCards();
+    }
+  } catch (e) {
+    console.error("Error loading behavioral radar threats:", e);
+  }
+}
+
+window.filterRadarThreats = function (filterType) {
+  currentRadarFilter = filterType;
+  const filterButtons = [
+    { id: 'filter-radar-all', type: 'ALL' },
+    { id: 'filter-radar-clone', type: 'PLATE_CLONING' },
+    { id: 'filter-radar-convoy', type: 'TACTICAL_CONVOY' },
+    { id: 'filter-radar-loiter', type: 'SURVEILLANCE_LOITERING' }
+  ];
+
+  filterButtons.forEach(btnInfo => {
+    const btn = document.getElementById(btnInfo.id);
+    if (btn) {
+      if (btnInfo.type === filterType) {
+        btn.className = 'px-3 py-1 rounded bg-cyan-600 text-white font-bold transition';
+      } else {
+        btn.className = 'px-3 py-1 rounded text-slate-400 hover:text-white transition';
+      }
+    }
+  });
+
+  renderRadarThreatCards();
+};
+
+function renderRadarThreatCards() {
+  const container = document.getElementById('radar-threat-cards-list');
+  const countEl = document.getElementById('radar-stream-count');
+  if (!container) return;
+
+  const filtered = activeRadarThreats.filter(t => {
+    if (currentRadarFilter === 'ALL') return true;
+    return t.threat_type === currentRadarFilter;
+  });
+
+  if (countEl) countEl.innerText = `${filtered.length} Active Outliers`;
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="p-4 bg-slate-950/80 rounded-xl border border-slate-800 text-center text-xs text-gray-400 font-mono">No active threats matching selected filter.</div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(t => {
+    let typeBadge = 'bg-rose-950/80 text-rose-400 border-rose-500/40';
+    let typeIcon = 'fa-clone';
+    let typeName = 'Plate Cloning Fraud';
+
+    if (t.threat_type === 'TACTICAL_CONVOY') {
+      typeBadge = 'bg-amber-950/80 text-amber-400 border-amber-500/40';
+      typeIcon = 'fa-truck-moving';
+      typeName = 'Tactical Convoy Formation';
+    } else if (t.threat_type === 'SURVEILLANCE_LOITERING') {
+      typeBadge = 'bg-purple-950/80 text-purple-400 border-purple-500/40';
+      typeIcon = 'fa-arrows-spin';
+      typeName = 'Surveillance Loitering Vector';
+    }
+
+    return `
+      <div id="threat-card-${t.threat_id}" class="p-4 bg-slate-950/90 rounded-xl border border-slate-800 hover:border-cyan-500/40 transition space-y-2.5 shadow-xl">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center space-x-2">
+            <span class="px-2 py-0.5 rounded border text-[10px] font-bold font-mono ${typeBadge} flex items-center space-x-1">
+              <i class="fa-solid ${typeIcon} mr-1"></i>${typeName}
+            </span>
+            <span class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-[10px] font-mono font-bold text-gray-300">${t.severity}</span>
+          </div>
+          <div class="flex items-center space-x-2 font-mono text-xs">
+            <span class="px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 font-bold">
+              Z-Score: +${t.evidence.anomaly_z_score}σ
+            </span>
+            <span class="text-[11px] text-gray-400">${t.detection_timestamp}</span>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-baseline justify-between gap-2">
+          <div class="flex items-center space-x-2">
+            <span class="font-mono text-base font-bold text-white bg-slate-900 px-2.5 py-0.5 rounded border border-slate-700">${t.primary_plate}</span>
+            ${t.secondary_plate ? `<span class="text-xs text-gray-400">&bull; Coupled With:</span><span class="font-mono text-xs font-bold text-amber-300 bg-amber-950/50 px-2 py-0.5 rounded border border-amber-500/40">${t.secondary_plate}</span>` : ''}
+          </div>
+          <span class="text-xs text-gray-300 font-medium">${t.primary_vehicle_desc}</span>
+        </div>
+
+        <!-- Mathematical Evidence Box -->
+        <div class="p-2.5 bg-slate-900/80 rounded-lg border border-slate-800 text-[11px] font-mono space-y-1">
+          <div class="flex justify-between text-cyan-400 font-bold">
+            <span>Evidence: ${t.evidence.metric_name}</span>
+            <span class="text-emerald-400">${Math.round(t.evidence.model_confidence * 100)}% Confidence</span>
+          </div>
+          <div class="text-slate-200">${t.evidence.physical_discrepancy}</div>
+          <div class="text-gray-400 pt-0.5 flex flex-wrap gap-x-4">
+            <span>Observed: <strong class="text-rose-400">${t.evidence.observed_value}</strong></span>
+            <span>Limit: <strong class="text-gray-300">${t.evidence.baseline_threshold}</strong></span>
+          </div>
+        </div>
+
+        <!-- Camera Trajectory Nodes -->
+        <div class="flex flex-wrap items-center justify-between text-[11px] pt-1 text-gray-400 font-mono">
+          <div class="flex items-center space-x-1">
+            <i class="fa-solid fa-camera text-cyan-400 mr-1"></i>
+            <span>Nodes: ${t.camera_names.join(' &rarr; ')}</span>
+          </div>
+          <span class="text-slate-400">Sector: ${t.sector}</span>
+        </div>
+
+        <!-- Recommended Action & Intercept Button -->
+        <div class="flex items-center justify-between pt-2 border-t border-slate-800/80">
+          <p class="text-[11px] text-rose-300 font-medium italic truncate max-w-[70%]">
+            <i class="fa-solid fa-shield-halved mr-1"></i>${t.suggested_action}
+          </p>
+          <button onclick="window.dispatchRadarIntercept('${t.threat_id}')" class="px-3 py-1 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded text-[11px] font-bold font-mono transition flex items-center space-x-1 shadow-md">
+            <i class="fa-solid fa-crosshairs"></i>
+            <span>Dispatch Intercept</span>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+window.simulateRadarThreat = async function (threatType) {
+  try {
+    const res = await fetch('/api/v1/anomalies/radar/simulate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ threat_type: threatType })
+    });
+
+    if (res.ok) {
+      await loadBehavioralThreats();
+    }
+  } catch (e) {
+    console.error("Failed to inject simulated radar threat:", e);
+  }
+};
+
+window.dispatchRadarIntercept = function (threatId) {
+  const threat = activeRadarThreats.find(t => t.threat_id === threatId);
+  if (threat) {
+    alert(`[TACTICAL INTERCEPT DISPATCHED]\nTarget Plate: ${threat.primary_plate}\nType: ${threat.threat_type}\nSector: ${threat.sector}\nAction: ${threat.suggested_action}`);
+  }
+};
+
+// =========================================================================
+// 2D CANVAS TACTICAL RADAR SWEEP ANIMATION
+// =========================================================================
+function initBehavioralRadar() {
+  const canvas = document.getElementById('pol-radar-canvas');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  const width = canvas.width;
+  const height = canvas.height;
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const maxRadius = centerX - 14;
+
+  window.radarCanvasInitialized = true;
+
+  function renderRadar() {
+    ctx.clearRect(0, 0, width, height);
+
+    // 1. Dark radar background
+    const bgGrad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, maxRadius);
+    bgGrad.addColorStop(0, '#040d1a');
+    bgGrad.addColorStop(0.7, '#030812');
+    bgGrad.addColorStop(1, '#020408');
+    ctx.fillStyle = bgGrad;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, maxRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Range concentric rings (2km, 4km, 6km, 8km, 10km)
+    ctx.strokeStyle = 'rgba(6, 182, 212, 0.25)';
+    ctx.lineWidth = 1;
+    ctx.font = '9px JetBrains Mono, monospace';
+    ctx.fillStyle = 'rgba(6, 182, 212, 0.6)';
+
+    for (let r = 1; r <= 5; r++) {
+      const curR = (maxRadius / 5) * r;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, curR, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Range text
+      ctx.fillText(`${r * 2}km`, centerX + 4, centerY - curR + 10);
+    }
+
+    // 3. Crosshairs and Diagonal Azimuth Lines
+    ctx.strokeStyle = 'rgba(6, 182, 212, 0.18)';
+    ctx.beginPath();
+    ctx.moveTo(centerX - maxRadius, centerY);
+    ctx.lineTo(centerX + maxRadius, centerY);
+    ctx.moveTo(centerX, centerY - maxRadius);
+    ctx.lineTo(centerX, centerY + maxRadius);
+    // 45 degree diagonals
+    const dOffset = maxRadius * 0.7071;
+    ctx.moveTo(centerX - dOffset, centerY - dOffset);
+    ctx.lineTo(centerX + dOffset, centerY + dOffset);
+    ctx.moveTo(centerX + dOffset, centerY - dOffset);
+    ctx.lineTo(centerX - dOffset, centerY + dOffset);
+    ctx.stroke();
+
+    // Azimuth Labels
+    ctx.fillStyle = 'rgba(56, 189, 248, 0.8)';
+    ctx.font = 'bold 9px JetBrains Mono, monospace';
+    ctx.fillText('N 000°', centerX - 14, centerY - maxRadius + 10);
+    ctx.fillText('E 090°', centerX + maxRadius - 38, centerY + 3);
+    ctx.fillText('S 180°', centerX - 14, centerY + maxRadius - 4);
+    ctx.fillText('W 270°', centerX - maxRadius + 4, centerY + 3);
+
+    // 4. Fixed Camera Network Nodes (Small Cyan Diamonds)
+    const fixedCams = [
+      { id: 'CAM_01', angle: 300, dist: 3.5 },
+      { id: 'CAM_02', angle: 30, dist: 4.8 },
+      { id: 'CAM_03', angle: 100, dist: 3.2 },
+      { id: 'CAM_04', angle: 220, dist: 5.4 },
+      { id: 'CAM_05', angle: 120, dist: 6.8 },
+      { id: 'CAM_06', angle: 155, dist: 9.2 }
+    ];
+
+    fixedCams.forEach(cam => {
+      const rad = (cam.angle * Math.PI) / 180;
+      const rDist = (cam.dist / 10) * maxRadius;
+      const cx = centerX + Math.cos(rad) * rDist;
+      const cy = centerY + Math.sin(rad) * rDist;
+
+      ctx.fillStyle = '#06b6d4';
+      ctx.beginPath();
+      ctx.arc(cx, cy, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = 'rgba(148, 163, 184, 0.7)';
+      ctx.font = '8px JetBrains Mono, monospace';
+      ctx.fillText(cam.id, cx + 5, cy - 3);
+    });
+
+    // 5. Active Behavioral Threat Blips
+    activeRadarThreats.forEach(t => {
+      if (currentRadarFilter !== 'ALL' && t.threat_type !== currentRadarFilter) return;
+
+      const rad = (t.radar_angle_deg * Math.PI) / 180;
+      const rDist = Math.min(maxRadius - 8, (t.radar_distance_km / 10) * maxRadius);
+      const bx = centerX + Math.cos(rad) * rDist;
+      const by = centerY + Math.sin(rad) * rDist;
+
+      // Color mapping
+      let blipColor = '#f43f5e'; // Red (Cloning)
+      if (t.threat_type === 'TACTICAL_CONVOY') blipColor = '#f59e0b'; // Amber
+      if (t.threat_type === 'SURVEILLANCE_LOITERING') blipColor = '#a855f7'; // Purple
+
+      // Pulsing outer beacon ring
+      const pulseSize = 4 + Math.sin(Date.now() * 0.006) * 3;
+      ctx.strokeStyle = blipColor;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(bx, by, pulseSize, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Solid core blip
+      ctx.fillStyle = blipColor;
+      ctx.beginPath();
+      ctx.arc(bx, by, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Plate tag label
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 8px JetBrains Mono, monospace';
+      ctx.fillText(t.primary_plate, bx + 7, by - 4);
+
+      // If Plate Cloning, draw coupled duplicate blip & dashed quantum entanglement link
+      if (t.threat_type === 'PLATE_CLONING') {
+        const rad2 = ((t.radar_angle_deg + 140) * Math.PI) / 180;
+        const rDist2 = Math.min(maxRadius - 10, rDist * 1.15);
+        const bx2 = centerX + Math.cos(rad2) * rDist2;
+        const by2 = centerY + Math.sin(rad2) * rDist2;
+
+        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = 'rgba(244, 63, 94, 0.65)';
+        ctx.beginPath();
+        ctx.moveTo(bx, by);
+        ctx.lineTo(bx2, by2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Duplicate blip
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(bx2, by2, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillText(`${t.primary_plate} [CLONE]`, bx2 + 6, by2 + 8);
+      }
+
+      // If Tactical Convoy, draw paired trailing vehicle blip
+      if (t.threat_type === 'TACTICAL_CONVOY') {
+        const bxLead = bx + 7;
+        const byLead = by + 6;
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(bxLead, byLead, 2.8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(245, 158, 11, 0.6)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(bx, by);
+        ctx.lineTo(bxLead, byLead);
+        ctx.stroke();
+      }
+
+      // If Surveillance Loitering, draw dashed orbital surveillance loop
+      if (t.threat_type === 'SURVEILLANCE_LOITERING') {
+        ctx.setLineDash([2, 3]);
+        ctx.strokeStyle = 'rgba(168, 85, 247, 0.5)';
+        ctx.beginPath();
+        ctx.arc(bx, by, 12, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    });
+
+    // 6. Sweeping Beam Arc
+    radarSweepAngle += 0.022;
+    if (radarSweepAngle >= Math.PI * 2) radarSweepAngle = 0;
+
+    const sweepGrad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, maxRadius);
+    sweepGrad.addColorStop(0, 'rgba(6, 182, 212, 0)');
+    sweepGrad.addColorStop(1, 'rgba(6, 182, 212, 0.35)');
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(centerX, centerY);
+    ctx.arc(centerX, centerY, maxRadius, radarSweepAngle - 0.45, radarSweepAngle);
+    ctx.closePath();
+    ctx.fillStyle = sweepGrad;
+    ctx.fill();
+
+    // Leading sweep line
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.9)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(centerX, centerY);
+    ctx.lineTo(centerX + Math.cos(radarSweepAngle) * maxRadius, centerY + Math.sin(radarSweepAngle) * maxRadius);
+    ctx.stroke();
+    ctx.restore();
+
+    // Outer border ring
+    ctx.strokeStyle = 'rgba(6, 182, 212, 0.6)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, maxRadius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    radarAnimFrame = requestAnimationFrame(renderRadar);
+  }
+
+  renderRadar();
 }
 
 // WHAT-IF SIMULATION & 3D DIGITAL TWIN INTEGRATION
