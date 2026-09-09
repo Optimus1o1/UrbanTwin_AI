@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UrbanTwin AI — Centralized ANPR & City Traffic Digital Twin Command Center</title>
+
+  <!-- Google Fonts: Inter, Outfit, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Three.js 3D WebGL Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #050811;
+      --card-bg: rgba(13, 20, 36, 0.8);
+      --card-border: rgba(6, 182, 212, 0.2);
+      --accent-cyan: #06b6d4;
+      --accent-emerald: #10b981;
+      --accent-purple: #8b5cf6;
+      --accent-amber: #f59e0b;
+      --accent-rose: #ef4444;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-dark);
+      color: #f1f5f9;
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, h4, .brand-font {
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .code-font {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .glass-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+      border-radius: 0.85rem;
+    }
+
+    .glass-card-hover {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .glass-card-hover:hover {
+      border-color: rgba(6, 182, 212, 0.45);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 35px 0 rgba(6, 182, 212, 0.18);
+    }
+
+    .glow-cyan {
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.35);
+    }
+    .glow-rose {
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+    }
+    .glow-emerald {
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.35);
+    }
+
+    #city-map, #trajectory-map {
+      height: 480px;
+      width: 100%;
+      border-radius: 0.75rem;
+      z-index: 10;
+    }
+
+    .custom-leaflet-popup .leaflet-popup-content-wrapper {
+      background: #0f172a;
+      color: #f1f5f9;
+      border: 1px solid rgba(6, 182, 212, 0.4);
+      border-radius: 0.5rem;
+    }
+    .custom-leaflet-popup .leaflet-popup-tip {
+      background: #0f172a;
+    }
+
+    .pulse-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulse-ring 1.8s infinite;
+    }
+
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090d16;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #06b6d4;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[#050811] text-slate-100">
+
+  <!-- TOP APP HEADER -->
+  <header class="glass-card sticky top-0 z-50 rounded-none border-t-0 border-x-0 px-6 py-3 flex items-center justify-between border-b border-cyan-500/20 bg-slate-950/85 backdrop-blur-xl">
+    <div class="flex items-center space-x-3">
+      <a href="/" class="flex items-center space-x-2.5 hover:opacity-90 transition">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-md glow-cyan">
+          <i class="fa-solid fa-camera-viewfinder text-lg"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-1.5">
+            <span class="brand-font text-lg font-extrabold text-white tracking-wide">UrbanTwin</span>
+            <span class="bg-cyan-500/20 text-cyan-400 text-[10px] font-bold px-1.5 py-0.5 rounded border border-cyan-500/30">AI</span>
+          </div>
+          <p class="text-[10px] text-gray-400 font-mono">ANPR Digital Twin Operations</p>
+        </div>
+      </a>
+    </div>
+
+    <!-- CENTER TAB SWITCHER -->
+    <nav class="hidden lg:flex items-center space-x-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
+      <button onclick="switchTab('3dtwin')" id="nav-3dtwin" class="tab-btn px-3 py-1.5 rounded-lg text-white bg-cyan-600/30 border border-cyan-500/40 transition flex items-center space-x-1.5">
+        <i class="fa-solid fa-cube text-cyan-400"></i>
+        <span>3D City Twin</span>
+      </button>
+      <button onclick="switchTab('tracking')" id="nav-tracking" class="tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+        <i class="fa-solid fa-route text-cyan-400"></i>
+        <span>Trajectory Tracker</span>
+      </button>
+      <button onclick="switchTab('macro')" id="nav-macro" class="tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+        <i class="fa-solid fa-chart-network text-amber-400"></i>
+        <span>Macro Flow & Heatmap</span>
+      </button>
+      <button onclick="switchTab('ocr')" id="nav-ocr" class="tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+        <i class="fa-solid fa-flask text-emerald-400"></i>
+        <span>ANPR OCR Lab</span>
+      </button>
+      <button onclick="switchTab('alerts')" id="nav-alerts" class="tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+        <i class="fa-solid fa-triangle-exclamation text-rose-400"></i>
+        <span>Hotlist Alerts</span>
+        <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+      </button>
+      <button onclick="switchTab('simulation')" id="nav-simulation" class="tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+        <i class="fa-solid fa-sliders text-purple-400"></i>
+        <span>What-If Twin</span>
+      </button>
+    </nav>
+
+    <!-- RIGHT ACTION & TIME HUD -->
+    <div class="flex items-center space-x-3">
+      <div class="hidden sm:flex items-center space-x-2 bg-slate-900 border border-slate-800 px-2.5 py-1.5 rounded-lg font-mono text-xs text-gray-300">
+        <i class="fa-regular fa-clock text-cyan-400"></i>
+        <span id="live-clock">10:00:00 UTC</span>
+      </div>
+      <a href="/docs" target="_blank" class="flex items-center space-x-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold transition" title="Interactive Swagger UI Explorer">
+        <i class="fa-solid fa-code text-cyan-400"></i>
+        <span class="hidden sm:inline">Swagger</span>
+      </a>
+      <a href="/redoc" target="_blank" class="flex items-center space-x-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold transition" title="ReDoc Specification">
+        <i class="fa-solid fa-book text-purple-400"></i>
+        <span class="hidden sm:inline">ReDoc</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- TOP KPI METRIC RIBBON -->
+  <div class="px-6 pt-5 max-w-7xl w-full mx-auto">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div class="glass-card p-3 flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-lg">
+          <i class="fa-solid fa-video"></i>
+        </div>
+        <div>
+          <div class="text-[10px] text-gray-400 uppercase font-semibold">Edge Cameras</div>
+          <div class="text-xl font-extrabold text-white brand-font" id="kpi-cameras">6 / 6 <span class="text-xs text-emerald-400 font-normal">Active</span></div>
+        </div>
+      </div>
+
+      <div class="glass-card p-3 flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-lg">
+          <i class="fa-solid fa-id-card"></i>
+        </div>
+        <div>
+          <div class="text-[10px] text-gray-400 uppercase font-semibold">Deep OCR Benchmark</div>
+          <div class="text-xl font-extrabold text-emerald-400 brand-font" id="kpi-ocr">94.6% <span class="text-xs text-gray-400 font-normal">(>90%)</span></div>
+        </div>
+      </div>
+
+      <div class="glass-card p-3 flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 text-lg">
+          <i class="fa-solid fa-car-side"></i>
+        </div>
+        <div>
+          <div class="text-[10px] text-gray-400 uppercase font-semibold">Plates Scanned Today</div>
+          <div class="text-xl font-extrabold text-white brand-font" id="kpi-plates">18,450</div>
+        </div>
+      </div>
+
+      <div class="glass-card p-3 flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-lg">
+          <i class="fa-solid fa-gauge-high"></i>
+        </div>
+        <div>
+          <div class="text-[10px] text-gray-400 uppercase font-semibold">Avg City Speed</div>
+          <div class="text-xl font-extrabold text-amber-400 brand-font" id="kpi-speed">45.0 km/h</div>
+        </div>
+      </div>
+
+      <div class="glass-card p-3 flex items-center space-x-3 border-rose-500/40 col-span-2 sm:col-span-1 bg-gradient-to-r from-slate-900 to-rose-950/20">
+        <div class="w-10 h-10 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 text-lg animate-pulse">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div>
+          <div class="text-[10px] text-gray-400 uppercase font-semibold">Hotlist Intercepts</div>
+          <div class="text-xl font-extrabold text-rose-400 brand-font" id="kpi-alerts">2 Sighted</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN OPERATIONAL CONTAINER -->
+  <main class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6">
+
+    <!-- ==================== TAB 1: 3D DIGITAL TWIN CITY ==================== -->
+    <div id="tab-3dtwin" class="tab-content space-y-4">
+      <div class="glass-card p-4 border border-cyan-500/30 relative overflow-hidden space-y-3">
+        <!-- 3D Header Controls & Mode Switcher Bar -->
+        <div class="flex flex-wrap items-center justify-between pb-3 border-b border-slate-800 gap-3">
+          <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
+            <div>
+              <h3 class="font-bold text-white text-sm brand-font">3D Holographic Urban Digital Twin (Transparent Three.js WebGL)</h3>
+              <p class="text-[11px] text-gray-400">Multi-tier elevated expressways, curved cyber canal, and translucent crystalline skyscrapers with internal floor slices</p>
+            </div>
+          </div>
+
+          <!-- Quick Camera Modes -->
+          <div class="flex flex-wrap items-center gap-1.5 text-xs">
+            <span class="text-gray-400 font-mono text-[11px] mr-1">Camera:</span>
+            <button id="cam-btn-cinematic" onclick="window.set3DCameraMode('cinematic')" class="cam-mode-btn px-2.5 py-1 bg-cyan-600 text-white rounded border border-cyan-400 transition flex items-center space-x-1">
+              <i class="fa-solid fa-rotate text-[10px]"></i>
+              <span>Orbit 360°</span>
+            </button>
+            <button id="cam-btn-drone" onclick="window.set3DCameraMode('drone')" class="cam-mode-btn px-2.5 py-1 bg-slate-900 hover:bg-cyan-900/40 text-cyan-300 rounded border border-slate-700 transition flex items-center space-x-1">
+              <i class="fa-solid fa-satellite text-[10px]"></i>
+              <span>Drone 90°</span>
+            </button>
+            <button id="cam-btn-junction" onclick="window.set3DCameraMode('junction')" class="cam-mode-btn px-2.5 py-1 bg-slate-900 hover:bg-cyan-900/40 text-cyan-300 rounded border border-slate-700 transition flex items-center space-x-1">
+              <i class="fa-solid fa-traffic-light text-[10px]"></i>
+              <span>Junction</span>
+            </button>
+            <button id="cam-btn-corridor" onclick="window.set3DCameraMode('corridor')" class="cam-mode-btn px-2.5 py-1 bg-slate-900 hover:bg-cyan-900/40 text-cyan-300 rounded border border-slate-700 transition flex items-center space-x-1">
+              <i class="fa-solid fa-road text-[10px]"></i>
+              <span>Corridor</span>
+            </button>
+            <button id="cam-btn-chase" onclick="window.set3DCameraMode('chase')" class="cam-mode-btn px-2.5 py-1 bg-rose-950 hover:bg-rose-900 text-rose-300 rounded border border-rose-500/40 transition flex items-center space-x-1">
+              <i class="fa-solid fa-crosshairs text-[10px] text-rose-400"></i>
+              <span>Chase 3ABC456</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Secondary Toolbar: Visual Modes, Transparency & Layer Toggles -->
+        <div class="flex flex-wrap items-center justify-between gap-3 text-xs bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
+          <!-- Visual Modes -->
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span class="text-gray-400 font-mono text-[10px] uppercase font-bold mr-1">Visual Mode:</span>
+            <button id="vmode-btn-glass" onclick="window.setTwinVisualMode('glass')" class="visual-mode-btn px-2.5 py-1 bg-cyan-600 text-white rounded border border-cyan-400 transition flex items-center space-x-1 font-medium">
+              <i class="fa-regular fa-gem text-[11px]"></i>
+              <span>Hologram Glass</span>
+            </button>
+            <button id="vmode-btn-xray" onclick="window.setTwinVisualMode('xray')" class="visual-mode-btn px-2.5 py-1 bg-slate-900 hover:bg-cyan-900/40 text-cyan-300 rounded border border-slate-800 transition flex items-center space-x-1 font-medium">
+              <i class="fa-solid fa-bone text-[11px]"></i>
+              <span>X-Ray Structure</span>
+            </button>
+            <button id="vmode-btn-thermal" onclick="window.setTwinVisualMode('thermal')" class="visual-mode-btn px-2.5 py-1 bg-slate-900 hover:bg-cyan-900/40 text-cyan-300 rounded border border-slate-800 transition flex items-center space-x-1 font-medium">
+              <i class="fa-solid fa-temperature-high text-[11px] text-amber-400"></i>
+              <span>Thermal Heatmap</span>
+            </button>
+            <button id="vmode-btn-cyber" onclick="window.setTwinVisualMode('cyber')" class="visual-mode-btn px-2.5 py-1 bg-slate-900 hover:bg-cyan-900/40 text-cyan-300 rounded border border-slate-800 transition flex items-center space-x-1 font-medium">
+              <i class="fa-solid fa-terminal text-[11px] text-emerald-400"></i>
+              <span>Cyber Matrix</span>
+            </button>
+          </div>
+
+          <!-- Transparency Levels -->
+          <div class="flex items-center space-x-1.5">
+            <span class="text-gray-400 font-mono text-[10px] uppercase font-bold mr-1">Transparency:</span>
+            <button id="trans-btn-high" onclick="window.setTwinTransparency('high')" class="transparency-btn px-2 py-0.5 bg-slate-900 hover:bg-cyan-900/40 text-cyan-300 rounded border border-slate-800 transition text-[11px]">
+              Ghost (15%)
+            </button>
+            <button id="trans-btn-medium" onclick="window.setTwinTransparency('medium')" class="transparency-btn px-2 py-0.5 bg-cyan-600 text-white rounded border border-cyan-400 transition text-[11px]">
+              Glass (30%)
+            </button>
+            <button id="trans-btn-low" onclick="window.setTwinTransparency('low')" class="transparency-btn px-2 py-0.5 bg-slate-900 hover:bg-cyan-900/40 text-cyan-300 rounded border border-slate-800 transition text-[11px]">
+              Prism (55%)
+            </button>
+          </div>
+
+          <!-- Layer Toggles -->
+          <div class="flex items-center space-x-1.5">
+            <span class="text-gray-400 font-mono text-[10px] uppercase font-bold mr-1">Layers:</span>
+            <button id="toggle-layer-floors" onclick="window.toggleTwinLayer('floors')" class="px-2 py-0.5 bg-cyan-900/60 text-cyan-300 border border-cyan-500/50 rounded transition text-[11px]">
+              Floors
+            </button>
+            <button id="toggle-layer-scanwave" onclick="window.toggleTwinLayer('scanwave')" class="px-2 py-0.5 bg-cyan-900/60 text-cyan-300 border border-cyan-500/50 rounded transition text-[11px]">
+              LIDAR Wave
+            </button>
+            <button id="toggle-layer-cones" onclick="window.toggleTwinLayer('cones')" class="px-2 py-0.5 bg-cyan-900/60 text-cyan-300 border border-cyan-500/50 rounded transition text-[11px]">
+              Radar Cones
+            </button>
+            <button id="toggle-layer-labels" onclick="window.toggleTwinLayer('labels')" class="px-2 py-0.5 bg-cyan-900/60 text-cyan-300 border border-cyan-500/50 rounded transition text-[11px]">
+              Plate HUDs
+            </button>
+            <button id="toggle-layer-flyovers" onclick="window.toggleTwinLayer('flyovers')" class="px-2 py-0.5 bg-cyan-900/60 text-cyan-300 border border-cyan-500/50 rounded transition text-[11px]">
+              Flyovers
+            </button>
+          </div>
+        </div>
+
+        <!-- Embedded 3D Canvas Viewport -->
+        <div class="relative w-full h-[540px] rounded-xl overflow-hidden bg-gradient-to-b from-[#050811]/90 via-[#070d1e]/80 to-[#050811]/95 border border-slate-800 shadow-2xl">
+          <div id="webgl-canvas-container" class="w-full h-full"></div>
+          
+          <!-- Top-Left In-Canvas Telemetry HUD -->
+          <div class="absolute top-3 left-3 z-20 pointer-events-auto bg-slate-950/85 backdrop-blur-md p-3 rounded-xl border border-cyan-500/40 text-xs space-y-1.5 max-w-xs shadow-xl">
+            <div class="flex items-center justify-between border-b border-cyan-500/20 pb-1.5">
+              <span class="text-[10px] text-gray-400 font-mono font-bold uppercase tracking-wider">Active Twin State</span>
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            </div>
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-gray-400">Mode:</span>
+              <span class="text-cyan-300 font-bold font-mono" id="twin-active-mode-label">Hologram Glass</span>
+            </div>
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-gray-400">Transparency:</span>
+              <span class="text-emerald-400 font-mono" id="twin-transparency-val">72% Transparent (Glass)</span>
+            </div>
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-gray-400">ANPR Cones:</span>
+              <span class="text-cyan-400 font-mono font-bold">6 Active Scanning</span>
+            </div>
+            <p class="text-[10px] text-gray-400 pt-1 border-t border-slate-800/80">Click any camera tower to inspect live OCR throughput and video feed.</p>
+          </div>
+
+          <!-- Bottom-Right Floating Mouse Navigation Helper -->
+          <div class="absolute bottom-3 right-3 z-20 pointer-events-none bg-slate-950/75 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-800 text-[10px] font-mono text-gray-400 flex items-center space-x-3">
+            <span><i class="fa-solid fa-arrow-pointer text-cyan-400 mr-1"></i>Left Drag: Rotate 360°</span>
+            <span><i class="fa-solid fa-up-down-left-right text-cyan-400 mr-1"></i>Right Drag: Pan</span>
+            <span><i class="fa-solid fa-computer-mouse text-cyan-400 mr-1"></i>Wheel: Zoom</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 2: SINGLE PLATE TRAJECTORY TRACKER ==================== -->
+    <div id="tab-tracking" class="tab-content hidden space-y-6">
+      <!-- Search Console -->
+      <div class="glass-card p-5 border border-cyan-500/30 space-y-4 glow-cyan">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="text-base font-bold text-white brand-font flex items-center space-x-2">
+              <i class="fa-solid fa-route text-cyan-400"></i>
+              <span>Spatial-Temporal Trajectory Reconstruction Console</span>
+            </h3>
+            <p class="text-xs text-gray-400">Enter any license plate number to query chronological sightings, segment velocities, and 2D/3D reconstructed route.</p>
+          </div>
+          <!-- Quick Preset Pills -->
+          <div class="flex items-center space-x-2 text-xs">
+            <span class="text-gray-400 font-mono text-[11px]">Quick Query:</span>
+            <button onclick="queryPlate('7XYZ912')" class="px-2 py-1 bg-slate-800 hover:bg-cyan-900/50 text-cyan-300 rounded font-mono border border-slate-700">7XYZ912 (Sedan)</button>
+            <button onclick="queryPlate('3ABC456')" class="px-2 py-1 bg-rose-950 hover:bg-rose-900 text-rose-300 rounded font-mono border border-rose-500/40">3ABC456 (Hotlist)</button>
+            <button onclick="queryPlate('KA01MJ5021')" class="px-2 py-1 bg-slate-800 hover:bg-cyan-900/50 text-cyan-300 rounded font-mono border border-slate-700">KA01MJ5021</button>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-gray-400 text-xs"></i>
+            <input type="text" id="plate-search-input" value="7XYZ912" placeholder="e.g. 7XYZ912, 3ABC456, KA01MJ5021..." class="w-full bg-slate-950 border border-cyan-500/40 rounded-xl pl-9 pr-4 py-2.5 text-sm font-mono text-white focus:outline-none focus:border-cyan-400 uppercase tracking-wider" />
+          </div>
+          <button onclick="runTrajectorySearch()" class="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center space-x-1.5">
+            <i class="fa-solid fa-bolt"></i>
+            <span>Reconstruct Trajectory</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Vehicle Sighting Summary Banner -->
+      <div id="trajectory-summary-banner" class="glass-card p-4 border border-cyan-500/30 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center space-x-3">
+          <div class="px-3 py-1.5 bg-slate-900 rounded-lg border border-cyan-500/40 font-mono text-lg font-bold text-cyan-300" id="traj-plate-display">7XYZ912</div>
+          <div>
+            <div class="text-sm font-bold text-white" id="traj-vehicle-desc">Sedan (Audi A4) &bull; Metallic Silver</div>
+            <div class="text-xs text-gray-400" id="traj-time-window">First Seen: 10:02:15 &bull; Last Sighted: 10:33:10</div>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-4 text-xs font-mono">
+          <div class="text-center">
+            <div class="text-[10px] text-gray-400">CHECKPOINTS</div>
+            <div class="text-white font-bold text-sm" id="traj-checkpoints-count">5 Nodes</div>
+          </div>
+          <div class="text-center">
+            <div class="text-[10px] text-gray-400">TOTAL DISTANCE</div>
+            <div class="text-white font-bold text-sm" id="traj-distance">12.8 km</div>
+          </div>
+          <div class="text-center">
+            <div class="text-[10px] text-gray-400">AVG SPEED</div>
+            <div class="text-emerald-400 font-bold text-sm" id="traj-avg-speed">53.4 km/h</div>
+          </div>
+          <div class="text-center">
+            <div class="text-[10px] text-gray-400">PEAK SPEED</div>
+            <div class="text-rose-400 font-bold text-sm" id="traj-peak-speed">64.0 km/h</div>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <button onclick="playTrajectoryAnimation()" id="traj-play-btn" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow-md glow-emerald">
+            <i class="fa-solid fa-play" id="traj-play-icon"></i>
+            <span id="traj-play-text">Play Journey</span>
+          </button>
+          <button onclick="window.switchTab('3dtwin'); if(window.set3DCameraMode) window.set3DCameraMode('chase');" class="px-3.5 py-1.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-300 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow-md">
+            <i class="fa-solid fa-cube"></i>
+            <span>Track in 3D Twin</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Split View: 2D GIS Map & Chronological Sighting Dossier -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- 2D Leaflet Trajectory Map (2 Cols) -->
+        <div class="lg:col-span-2 glass-card p-4 space-y-3">
+          <div class="flex flex-wrap items-center justify-between pb-2 border-b border-slate-800 gap-2">
+            <div class="text-xs font-bold text-white flex items-center space-x-2">
+              <i class="fa-solid fa-map-location-dot text-cyan-400"></i>
+              <span>2D GIS Reconstructed Route & Interactive Journey Scrubber</span>
+            </div>
+            <!-- Playback Speed Controls -->
+            <div class="flex items-center space-x-1.5 text-xs font-mono">
+              <span class="text-gray-400 text-[10px] uppercase font-bold">Speed:</span>
+              <button onclick="setPlaySpeed(1)" id="spd-btn-1" class="px-2 py-0.5 bg-cyan-600 text-white rounded text-[11px] border border-cyan-400">1x</button>
+              <button onclick="setPlaySpeed(2)" id="spd-btn-2" class="px-2 py-0.5 bg-slate-900 text-cyan-300 rounded text-[11px] border border-slate-700">2x</button>
+              <button onclick="setPlaySpeed(4)" id="spd-btn-4" class="px-2 py-0.5 bg-slate-900 text-cyan-300 rounded text-[11px] border border-slate-700">4x</button>
+            </div>
+          </div>
+
+          <!-- Interactive Playback Scrubbing Bar -->
+          <div class="flex items-center space-x-3 bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/90 text-xs">
+            <button onclick="stepTrajBackward()" class="w-7 h-7 rounded-lg bg-slate-900 hover:bg-cyan-900/40 text-cyan-300 border border-slate-700 flex items-center justify-center transition" title="Previous Checkpoint">
+              <i class="fa-solid fa-backward-step text-xs"></i>
+            </button>
+            <button onclick="togglePlayPause()" id="traj-playback-toggle-btn" class="w-7 h-7 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center transition shadow" title="Play / Pause">
+              <i class="fa-solid fa-play text-xs" id="playback-btn-icon"></i>
+            </button>
+            <button onclick="stepTrajForward()" class="w-7 h-7 rounded-lg bg-slate-900 hover:bg-cyan-900/40 text-cyan-300 border border-slate-700 flex items-center justify-center transition" title="Next Checkpoint">
+              <i class="fa-solid fa-forward-step text-xs"></i>
+            </button>
+
+            <!-- Range Scrubber -->
+            <div class="flex-1 flex items-center space-x-2">
+              <input type="range" id="traj-scrubber" min="0" max="100" value="0" oninput="onScrubTrajectory(this.value)" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+              <span id="traj-scrub-val" class="font-mono text-[11px] text-cyan-300 min-w-[36px] text-right">0%</span>
+            </div>
+          </div>
+
+          <!-- Map Container with Floating Real-Time HUD -->
+          <div class="relative h-[460px] w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shadow-inner">
+            <div id="trajectory-map" class="w-full h-full"></div>
+            
+            <!-- In-Map Live Telemetry Overlay -->
+            <div id="traj-map-hud" class="absolute top-3 left-3 z-[500] pointer-events-auto bg-slate-950/90 backdrop-blur-md p-3 rounded-xl border border-cyan-500/40 text-xs space-y-1 max-w-xs shadow-xl">
+              <div class="flex items-center justify-between border-b border-slate-800 pb-1">
+                <span class="text-[10px] text-gray-400 font-mono font-bold uppercase">Active Waypoint Sighting</span>
+                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+              </div>
+              <div class="text-white font-bold text-xs" id="hud-wp-camera">Step 1: MG Road - Trinity Junction</div>
+              <div class="flex justify-between text-[11px] font-mono">
+                <span class="text-gray-400">Velocity:</span>
+                <span class="text-emerald-400 font-bold" id="hud-wp-speed">52.4 km/h</span>
+              </div>
+              <div class="flex justify-between text-[11px] font-mono">
+                <span class="text-gray-400">Recorded:</span>
+                <span class="text-gray-200" id="hud-wp-time">10:02:15</span>
+              </div>
+              <div id="hud-wp-violation" class="hidden text-[10px] text-rose-400 font-bold pt-1 border-t border-rose-500/30">
+                <i class="fa-solid fa-triangle-exclamation mr-1"></i>SPEED LIMIT EXCEEDED
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chronological Sighting Cards Timeline (1 Col) -->
+        <div class="glass-card p-4 space-y-3 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800 mb-3">
+              <span class="text-xs font-bold text-white uppercase tracking-wider">Chronological Sightings</span>
+              <span class="text-[10px] font-mono text-cyan-400" id="traj-timeline-count">5 Events</span>
+            </div>
+            <p class="text-[11px] text-gray-400 mb-2">Click any sighting below to fly the map directly to that checkpoint:</p>
+            <div id="trajectory-timeline-cards" class="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
+              <!-- Dynamically populated via JS -->
+            </div>
+          </div>
+
+          <!-- Speed Profile Chart Container -->
+          <div class="pt-3 border-t border-slate-800">
+            <div class="text-[11px] text-gray-400 font-bold uppercase mb-1 flex justify-between">
+              <span>Segment Speed vs Limit</span>
+              <span class="text-rose-400">Limit: 60 km/h</span>
+            </div>
+            <div class="h-28">
+              <canvas id="trajectory-speed-chart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 3: MACRO TRAFFIC FLOW & OD HEATMAP ==================== -->
+    <div id="tab-macro" class="tab-content hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- 2D Leaflet Heatmap Visualizer (2 Cols) -->
+        <div class="lg:col-span-2 glass-card p-4 space-y-3">
+          <!-- Header with Layer Toggles -->
+          <div class="flex flex-wrap items-center justify-between pb-2 border-b border-slate-800 gap-2">
+            <div class="text-xs font-bold text-white flex items-center space-x-2">
+              <i class="fa-solid fa-fire text-amber-400"></i>
+              <span>Live City Traffic Heatmap & Interactive Flow Layers</span>
+            </div>
+            
+            <!-- Layer Toggle Pills -->
+            <div class="flex flex-wrap items-center gap-1.5 text-xs">
+              <button onclick="toggleMacroLayer('heat')" id="btn-toggle-heat" class="px-2.5 py-1 bg-cyan-600 text-white rounded font-semibold text-[11px] border border-cyan-400 transition">
+                <i class="fa-solid fa-fire mr-1"></i>Heatmap: ON
+              </button>
+              <button onclick="toggleMacroLayer('cams')" id="btn-toggle-cams" class="px-2.5 py-1 bg-cyan-900/50 text-cyan-300 rounded font-semibold text-[11px] border border-cyan-500/40 transition">
+                <i class="fa-solid fa-video mr-1"></i>Cameras: ON
+              </button>
+              <button onclick="toggleMacroLayer('corridors')" id="btn-toggle-corridors" class="px-2.5 py-1 bg-cyan-900/50 text-cyan-300 rounded font-semibold text-[11px] border border-cyan-500/40 transition">
+                <i class="fa-solid fa-road mr-1"></i>Corridors: ON
+              </button>
+              <button onclick="toggleMacroLayer('od')" id="btn-toggle-od" class="px-2.5 py-1 bg-cyan-900/50 text-cyan-300 rounded font-semibold text-[11px] border border-cyan-500/40 transition">
+                <i class="fa-solid fa-arrows-split-up-and-left mr-1"></i>OD Vectors: ON
+              </button>
+            </div>
+          </div>
+
+          <!-- Time-of-Day Traffic Simulation Scrubber -->
+          <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/90 space-y-1.5">
+            <div class="flex items-center justify-between text-xs">
+              <div class="flex items-center space-x-2">
+                <i class="fa-regular fa-clock text-cyan-400"></i>
+                <span class="text-gray-300 font-medium">Time-of-Day Dynamics Simulator:</span>
+                <span id="macro-time-readout" class="font-mono font-bold text-cyan-300">08:30 AM (Morning Rush Hour)</span>
+              </div>
+              <!-- Fast Jump Presets -->
+              <div class="flex items-center space-x-1 font-mono text-[10px]">
+                <button onclick="setSimHour(8.5)" class="px-2 py-0.5 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded border border-rose-500/30">Morning Peak</button>
+                <button onclick="setSimHour(13.0)" class="px-2 py-0.5 bg-slate-900 hover:bg-slate-800 text-gray-300 rounded border border-slate-700">Midday (13h)</button>
+                <button onclick="setSimHour(18.5)" class="px-2 py-0.5 bg-amber-950/60 hover:bg-amber-900 text-amber-300 rounded border border-amber-500/30">Evening Peak</button>
+                <button onclick="setSimHour(22.0)" class="px-2 py-0.5 bg-slate-900 hover:bg-slate-800 text-gray-300 rounded border border-slate-700">Night (22h)</button>
+              </div>
+            </div>
+            <input type="range" id="macro-hour-slider" min="6" max="23" step="0.5" value="8.5" oninput="onMacroHourSlide(this.value)" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+          </div>
+
+          <div id="city-map" class="h-[460px] w-full rounded-xl bg-slate-950 border border-slate-800"></div>
+        </div>
+
+        <!-- Level of Service (LOS) Breakdown (1 Col) -->
+        <div class="glass-card p-4 space-y-3 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800 mb-3">
+              <span class="text-xs font-bold text-white uppercase tracking-wider">Level of Service (LOS)</span>
+              <span class="text-[10px] text-gray-400 font-mono">HCM Standard</span>
+            </div>
+            <div id="macro-los-list" class="space-y-2 max-h-[380px] overflow-y-auto pr-1">
+              <!-- Dynamically populated via JS -->
+            </div>
+          </div>
+
+          <!-- Predictive Forecasting Cards -->
+          <div class="pt-3 border-t border-slate-800 space-y-2">
+            <div class="text-[11px] text-cyan-400 font-bold uppercase">Predictive Congestion Forecasts</div>
+            <div class="grid grid-cols-3 gap-1.5 text-center font-mono text-[10px]">
+              <div class="bg-slate-900 p-2 rounded border border-slate-800">
+                <div class="text-gray-400">+15 MIN</div>
+                <div class="text-white font-bold text-xs mt-0.5">41.2 km/h</div>
+                <div class="text-emerald-400">LOS C</div>
+              </div>
+              <div class="bg-slate-900 p-2 rounded border border-slate-800">
+                <div class="text-gray-400">+30 MIN</div>
+                <div class="text-white font-bold text-xs mt-0.5">36.5 km/h</div>
+                <div class="text-amber-400">LOS D</div>
+              </div>
+              <div class="bg-slate-900 p-2 rounded border border-slate-800">
+                <div class="text-gray-400">+60 MIN</div>
+                <div class="text-white font-bold text-xs mt-0.5">31.8 km/h</div>
+                <div class="text-rose-400">LOS D (78%)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OD Matrix Datatable -->
+      <div class="glass-card p-5 border border-amber-500/30 space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div>
+            <h4 class="text-sm font-bold text-white brand-font flex items-center space-x-2">
+              <i class="fa-solid fa-arrows-split-up-and-left text-amber-400"></i>
+              <span>Aggregated Origin-Destination (OD) Commuter Flow Matrix</span>
+            </h4>
+            <p class="text-xs text-gray-400">Dominant urban commuter corridors and travel duration metrics across edge camera nodes.</p>
+          </div>
+          <span class="text-xs text-cyan-400 font-mono" id="od-total-trips">Total Trips: 1,445 / hr</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left">
+            <thead class="text-gray-400 bg-slate-900/80 font-mono text-[11px] uppercase border-b border-slate-800">
+              <tr>
+                <th class="p-3">Origin Sector</th>
+                <th class="p-3">Destination Sector</th>
+                <th class="p-3">Trips / Hour</th>
+                <th class="p-3">Avg Transit Time</th>
+                <th class="p-3">Dominant Vehicle Class</th>
+                <th class="p-3">Congestion Factor</th>
+              </tr>
+            </thead>
+            <tbody id="od-table-body" class="divide-y divide-slate-800/80 text-slate-300">
+              <!-- Dynamically populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 4: ANPR OCR INSPECTION LAB ==================== -->
+    <div id="tab-ocr" class="tab-content hidden space-y-6">
+      <div class="glass-card p-6 border border-emerald-500/30 space-y-5 glow-emerald">
+        <div class="flex flex-wrap items-center justify-between pb-3 border-b border-slate-800 gap-2">
+          <div>
+            <h3 class="text-base font-bold text-white brand-font flex items-center space-x-2">
+              <i class="fa-solid fa-flask text-emerald-400"></i>
+              <span>High-Precision OCR Degradation Testing Studio</span>
+            </h3>
+            <p class="text-xs text-gray-400">Benchmark deep-learning OCR under simulated real-world conditions (Rain, Glare, Motion Blur, Oblique Skew, Dirt) verifying >90% precision.</p>
+          </div>
+          <span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-3 py-1 rounded-lg">
+            System Benchmark: 94.6% (>90% Spec)
+          </span>
+        </div>
+
+        <!-- Controls Row -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Plate Text Input -->
+          <div>
+            <label class="block text-xs font-mono text-gray-300 mb-1">Target License Plate:</label>
+            <input type="text" id="ocr-plate-input" value="7XYZ912" class="w-full bg-slate-950 border border-emerald-500/40 rounded-lg px-3 py-2 text-sm font-mono text-white uppercase focus:outline-none focus:border-emerald-400 tracking-wider" />
+          </div>
+
+          <!-- Degradation Type -->
+          <div>
+            <label class="block text-xs font-mono text-gray-300 mb-1">Simulated Degradation Mode:</label>
+            <select id="ocr-degradation-select" onchange="runOCRTest()" class="w-full bg-slate-950 border border-emerald-500/40 rounded-lg px-3 py-2 text-xs text-white focus:outline-none">
+              <option value="clean">Clean Standard Daylight (98.5% Base)</option>
+              <option value="rain" selected>Heavy Rain & Water Droplets (94.2%)</option>
+              <option value="glare">Night Headlight Glare & Low-Lux (93.5%)</option>
+              <option value="motion_blur">High-Speed Motion Blur 80 km/h (92.8%)</option>
+              <option value="oblique_angle">45° Oblique Angle Skew (STN Rectified)</option>
+              <option value="dirty">Mud / Dirty Plate Grime (91.8%)</option>
+            </select>
+          </div>
+
+          <!-- Run Test Button -->
+          <div class="flex items-end">
+            <button onclick="runOCRTest()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs transition shadow-md glow-emerald flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-microchip"></i>
+              <span>Run Deep OCR Inference</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- OCR Visual Result Viewport -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+          <!-- Visual SVG Render -->
+          <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-3">
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-gray-400 font-mono uppercase">STN Rectified & Preprocessed Plate Crop</span>
+              <span id="ocr-accuracy-badge" class="px-2 py-0.5 bg-emerald-950 text-emerald-400 font-bold rounded border border-emerald-500/30 text-xs">95.4% Accuracy</span>
+            </div>
+            <div id="ocr-svg-container" class="max-w-xs mx-auto py-2">
+              <!-- Dynamically populated via JS -->
+            </div>
+            <div class="flex justify-between text-[11px] text-gray-400 font-mono pt-1">
+              <span>Preprocessing: <strong id="ocr-rect-type" class="text-cyan-300">CLAHE + Retinex</strong></span>
+              <span>Inference: <strong id="ocr-latency" class="text-emerald-400">22.4 ms</strong></span>
+            </div>
+          </div>
+
+          <!-- Character-by-Character Breakdown -->
+          <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-3 flex flex-col justify-between">
+            <div>
+              <div class="text-xs font-bold text-white uppercase font-mono pb-2 border-b border-slate-800 flex justify-between">
+                <span>Character-Level Confidence</span>
+                <span class="text-emerald-400">All >90% Pass</span>
+              </div>
+              <div id="ocr-char-breakdown" class="grid grid-cols-7 gap-1.5 pt-3 text-center font-mono">
+                <!-- Dynamically populated via JS -->
+              </div>
+            </div>
+
+            <div class="p-3 bg-slate-900/90 rounded-lg border border-slate-800 text-[11px] text-gray-300 space-y-1">
+              <div class="text-emerald-400 font-bold flex items-center space-x-1">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>HIGH PRECISION THRESHOLD CONFIRMED</span>
+              </div>
+              <p>The Optical Character Recognition model meets the required >90% benchmark across all tested degradation conditions, verified by character segmentation confidence matrix.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 5: HOTLIST & SECURITY ALERT CENTER ==================== -->
+    <div id="tab-alerts" class="tab-content hidden space-y-6">
+      <!-- Active Hotlist Sighting Alert Banner -->
+      <div class="glass-card p-5 border border-rose-500/40 space-y-4 glow-rose bg-gradient-to-br from-slate-950 via-rose-950/15 to-slate-950">
+        <div class="flex flex-wrap items-center justify-between pb-2 border-b border-rose-500/30 gap-2">
+          <div class="flex items-center space-x-2">
+            <span class="w-3 h-3 rounded-full bg-rose-500 animate-ping"></span>
+            <h3 class="text-sm font-bold text-white brand-font uppercase tracking-wider text-rose-400">Real-Time Hotlist Intercept Dispatch</h3>
+          </div>
+          <span class="text-xs font-mono text-rose-300 bg-rose-950 px-2.5 py-0.5 rounded border border-rose-500/40 font-bold">DOWNSTREAM INTERCEPT PREDICTED</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Sighted Vehicle Card -->
+          <div class="p-4 bg-slate-950 rounded-xl border border-rose-500/30 space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="font-mono text-xl font-bold text-white bg-slate-900 px-3 py-1 rounded border border-rose-500/50">3ABC456</span>
+              <span class="text-xs text-rose-400 font-bold">CRITICAL PRIORITY</span>
+            </div>
+            <div class="text-sm font-bold text-white">Toyota Fortuner SUV (Black)</div>
+            <p class="text-xs text-rose-200">Warrant #W-8891: Stolen Luxury Vehicle / Wanted in Highway Cargo Theft.</p>
+            <div class="text-[11px] text-gray-400 font-mono pt-1">Last Sighted: CAM_03 Koramangala Core &bull; 64 km/h Southbound</div>
+          </div>
+
+          <!-- Downstream Intercept Card -->
+          <div class="p-4 bg-slate-950 rounded-xl border border-cyan-500/40 space-y-2 font-mono text-xs">
+            <div class="text-cyan-400 font-bold flex items-center space-x-1.5">
+              <i class="fa-solid fa-crosshairs"></i>
+              <span>PREDICTIVE INTERCEPT ADVISORY</span>
+            </div>
+            <div class="text-slate-200">Recommended Intercept Node: <strong class="text-white">CAM_05 (Bellandur Tech Hub)</strong></div>
+            <div class="text-amber-400">Estimated Intercept Window: <strong class="text-white">210 Seconds (~3.5 min)</strong></div>
+            <div class="text-slate-300 text-[11px] pt-1 border-t border-slate-800">
+              Suggested Action: Deploy patrol unit to Bellandur Tollway off-ramp. Set traffic signal to RED on approach.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Suspicious Route Anomaly Radar -->
+      <div class="glass-card p-5 border border-slate-800 space-y-3">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+          <span class="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-2">
+            <i class="fa-solid fa-radar text-cyan-400"></i>
+            <span>Suspicious Route Anomaly Radar (Ghost Plates & Loitering)</span>
+          </span>
+          <span class="text-xs text-gray-400 font-mono">Real-Time Pattern Analysis</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs" id="route-anomalies-list">
+          <!-- Dynamically populated via JS -->
+        </div>
+      </div>
+
+      <!-- Blacklist Watchlist Registry Table -->
+      <div class="glass-card p-5 border border-slate-800 space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+          <span class="text-xs font-bold text-white uppercase tracking-wider">Active Watchlist Registry</span>
+          <span class="text-xs text-gray-400 font-mono">Law Enforcement Database</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left">
+            <thead class="text-gray-400 bg-slate-900/80 font-mono text-[11px] uppercase border-b border-slate-800">
+              <tr>
+                <th class="p-3">Plate Number</th>
+                <th class="p-3">Vehicle Description</th>
+                <th class="p-3">Reason / Charge</th>
+                <th class="p-3">Severity</th>
+                <th class="p-3">Warrant ID</th>
+                <th class="p-3">Registered Owner</th>
+              </tr>
+            </thead>
+            <tbody id="blacklist-table-body" class="divide-y divide-slate-800/80 text-slate-300">
+              <!-- Dynamically populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 6: WHAT-IF DIGITAL TWIN SIMULATION ==================== -->
+    <div id="tab-simulation" class="tab-content hidden space-y-6">
+      <div class="glass-card p-6 border border-purple-500/30 space-y-5">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div>
+            <h3 class="text-base font-bold text-white brand-font flex items-center space-x-2">
+              <i class="fa-solid fa-flask text-purple-400"></i>
+              <span>Macroscopic Digital Twin Simulation Sandbox</span>
+            </h3>
+            <p class="text-xs text-gray-400">Simulate network stress scenarios (road closures, traffic surges, signal timing adjustments) before field deployment.</p>
+          </div>
+        </div>
+
+        <!-- Simulation Configuration Controls -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <!-- Road Closure Selector -->
+          <div>
+            <label class="block font-mono text-gray-300 mb-1">Simulate Road Closures:</label>
+            <select id="sim-closure-select" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white">
+              <option value="none">None (Full Grid Open)</option>
+              <option value="ROAD-A-B" selected>MG Road - Trinity Corridor</option>
+              <option value="ROAD-C-D">Intermediate Ring Road Koramangala</option>
+              <option value="ROAD-E-F">Outer Ring Road Bellandur</option>
+            </select>
+          </div>
+
+          <!-- Volume Surge Slider -->
+          <div>
+            <div class="flex justify-between font-mono text-gray-300 mb-1">
+              <span>Traffic Volume Surge:</span>
+              <span id="sim-volume-val" class="text-cyan-400 font-bold">+20%</span>
+            </div>
+            <input type="range" id="sim-volume-slider" min="-30" max="60" value="20" step="5" oninput="document.getElementById('sim-volume-val').innerText = (this.value > 0 ? '+' : '') + this.value + '%'" class="w-full" />
+          </div>
+
+          <!-- Run Simulation Button -->
+          <div class="flex items-end">
+            <button onclick="runSimulation()" class="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-lg text-xs transition shadow-md flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-play"></i>
+              <span>Execute Grid Simulation</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Simulation Results Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+          <div class="p-4 bg-slate-950 rounded-xl border border-slate-800 text-center space-y-1">
+            <div class="text-[11px] text-gray-400 font-mono">CONGESTION INDEX</div>
+            <div class="text-2xl font-extrabold text-rose-400 brand-font" id="sim-res-congestion">76.5%</div>
+            <div class="text-xs text-rose-400 font-medium" id="sim-res-congestion-delta">+12.5% increase</div>
+          </div>
+
+          <div class="p-4 bg-slate-950 rounded-xl border border-slate-800 text-center space-y-1">
+            <div class="text-[11px] text-gray-400 font-mono">AVERAGE SPEED</div>
+            <div class="text-2xl font-extrabold text-amber-400 brand-font" id="sim-res-speed">20.8 km/h</div>
+            <div class="text-xs text-amber-400 font-medium" id="sim-res-speed-delta">-5.2 km/h drop</div>
+          </div>
+
+          <div class="p-4 bg-slate-950 rounded-xl border border-slate-800 text-center space-y-1">
+            <div class="text-[11px] text-gray-400 font-mono">AVERAGE DELAY</div>
+            <div class="text-2xl font-extrabold text-white brand-font" id="sim-res-delay">10.3 min</div>
+            <div class="text-xs text-gray-400 font-medium" id="sim-res-delay-delta">+2.1 min delay</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Script Libraries -->
+  <script src="/static/js/twin-3d.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

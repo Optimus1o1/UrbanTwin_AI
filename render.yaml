@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: urbantwin-ai
+    runtime: python
+    buildCommand: pip install --upgrade pip && pip install -r backend/requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --app-dir backend
+    plan: free
+    region: oregon
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ANPR_SALT
+        value: urbantwin_anpr_salt_privacy_protection_render_2026
+      - key: ENVIRONMENT
+        value: production

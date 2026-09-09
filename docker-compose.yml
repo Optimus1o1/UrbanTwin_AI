@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  urbantwin-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: urbantwin_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - SECRET_KEY=urbantwin-super-secret-key-change-in-production-2026-secure
+      - ANPR_SALT=urbantwin_anpr_salt_privacy_protection_9921
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
