@@ -103,13 +103,28 @@
       isDragging = false;
       isRightDragging = false;
     });
+    let zoomHintTimer = null;
     container.addEventListener('contextmenu', e => e.preventDefault());
     container.addEventListener('wheel', e => {
-      e.preventDefault();
-      spherical.radius += e.deltaY * 0.05;
-      spherical.radius = Math.max(15, Math.min(130, spherical.radius));
-      updateCameraFromSpherical();
-      cameraMode = 'manual';
+      // Only zoom 3D twin if Ctrl or Meta is held, allowing normal mouse wheel page scrolling
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        spherical.radius += e.deltaY * 0.05;
+        spherical.radius = Math.max(15, Math.min(130, spherical.radius));
+        updateCameraFromSpherical();
+        cameraMode = 'manual';
+      } else {
+        const hint = document.getElementById('zoom-scroll-hint');
+        if (hint) {
+          hint.classList.remove('opacity-0', 'pointer-events-none');
+          hint.classList.add('opacity-100');
+          clearTimeout(zoomHintTimer);
+          zoomHintTimer = setTimeout(() => {
+            hint.classList.remove('opacity-100');
+            hint.classList.add('opacity-0', 'pointer-events-none');
+          }, 1800);
+        }
+      }
     }, { passive: false });
 
     // Start render loop
@@ -505,6 +520,13 @@
       targetCameraPos = { x: 22, y: 14, z: 32 };
       targetLookAt = { x: 5, y: 2, z: 20 };
     }
+  };
+
+  window.zoom3D = function (delta) {
+    spherical.radius += delta;
+    spherical.radius = Math.max(15, Math.min(130, spherical.radius));
+    updateCameraFromSpherical();
+    cameraMode = 'manual';
   };
 
   // HOTLIST INTERCEPT LASER BEAM

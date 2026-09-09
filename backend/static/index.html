@@ -98,6 +98,10 @@
       100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
 
+    html {
+      scroll-behavior: smooth;
+    }
+
     #webgl-canvas-container {
       position: absolute;
       top: 0;
@@ -105,6 +109,7 @@
       width: 100%;
       height: 100%;
       z-index: 1;
+      touch-action: pan-y;
     }
 
     .hero-gradient-overlay {
@@ -185,14 +190,35 @@
       <button onclick="window.set3DCameraMode('drone')" class="px-2.5 py-1 bg-slate-800 hover:bg-cyan-900/40 text-cyan-300 rounded font-medium transition">Drone 90°</button>
       <button onclick="window.set3DCameraMode('junction')" class="px-2.5 py-1 bg-slate-800 hover:bg-cyan-900/40 text-cyan-300 rounded font-medium transition">Junction</button>
       <button onclick="window.set3DCameraMode('corridor')" class="px-2.5 py-1 bg-slate-800 hover:bg-cyan-900/40 text-cyan-300 rounded font-medium transition">Corridor</button>
+      <div class="h-4 w-px bg-slate-700 mx-1"></div>
+      <button onclick="window.zoom3D(-8)" title="Zoom In 3D" class="w-7 h-7 bg-slate-800 hover:bg-cyan-900/40 text-cyan-300 rounded font-bold transition flex items-center justify-center">
+        <i class="fa-solid fa-plus text-[10px]"></i>
+      </button>
+      <button onclick="window.zoom3D(8)" title="Zoom Out 3D" class="w-7 h-7 bg-slate-800 hover:bg-cyan-900/40 text-cyan-300 rounded font-bold transition flex items-center justify-center">
+        <i class="fa-solid fa-minus text-[10px]"></i>
+      </button>
+    </div>
+
+    <!-- Scroll Down Indicator -->
+    <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center pointer-events-auto">
+      <a href="#anpr-ocr" class="flex flex-col items-center text-xs text-cyan-400/80 hover:text-cyan-300 transition group">
+        <span class="text-[10px] font-mono uppercase tracking-widest mb-1 text-gray-400 group-hover:text-cyan-300">Scroll Down</span>
+        <i class="fa-solid fa-chevron-down text-sm animate-bounce text-cyan-400"></i>
+      </a>
     </div>
 
     <!-- Mouse Navigation Hint Badge -->
     <div class="absolute bottom-6 right-6 z-20 hidden sm:flex items-center space-x-3 glass-card px-3 py-1.5 border border-slate-800 text-[10px] font-mono text-gray-400 shadow-lg">
       <span><i class="fa-solid fa-arrow-pointer text-cyan-400 mr-1"></i>Drag to Orbit</span>
       <span><i class="fa-solid fa-up-down-left-right text-cyan-400 mr-1"></i>Right-Drag to Pan</span>
-      <span><i class="fa-solid fa-computer-mouse text-cyan-400 mr-1"></i>Wheel to Zoom</span>
-      <span><i class="fa-solid fa-hand-pointer text-emerald-400 mr-1"></i>Click Buildings & Nodes</span>
+      <span><i class="fa-solid fa-keyboard text-cyan-400 mr-1"></i>Ctrl+Scroll to Zoom</span>
+      <span><i class="fa-solid fa-hand-pointer text-emerald-400 mr-1"></i>Click Buildings</span>
+    </div>
+
+    <!-- Floating Zoom Notification Pill -->
+    <div id="zoom-scroll-hint" class="absolute top-6 right-6 z-20 opacity-0 pointer-events-none transition-opacity duration-300 glass-card px-3.5 py-2 border border-cyan-500/40 text-xs font-mono text-cyan-200 shadow-2xl flex items-center space-x-2 bg-slate-950/90 backdrop-blur-md">
+      <i class="fa-solid fa-circle-info text-cyan-400 text-sm"></i>
+      <span>Page scrolling enabled. Hold <kbd class="px-1.5 py-0.5 bg-slate-800 border border-cyan-500/50 rounded text-cyan-300 font-bold">Ctrl</kbd> + Scroll to zoom 3D twin, or use <strong>+/-</strong></span>
     </div>
 
     <!-- Hero Content Overlay -->

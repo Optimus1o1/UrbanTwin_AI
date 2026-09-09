@@ -148,6 +148,22 @@ python backend/tests/verify_live.py
 
 ---
 
+## 🧠 Train Personalized Model in Google Colab
+
+UrbanTwin AI includes a pre-built Google Colab training studio with a synthetic demo dataset generator:
+
+* **Colab Notebook**: [`UrbanTwin_AI_Personalized_Model_Colab.ipynb`](UrbanTwin_AI_Personalized_Model_Colab.ipynb) (or [`backend/training/UrbanTwin_AI_Personalized_Model_Colab.ipynb`](backend/training/UrbanTwin_AI_Personalized_Model_Colab.ipynb))
+* **Guide**: See [COLAB_TRAINING_GUIDE.md](COLAB_TRAINING_GUIDE.md) for full instructions.
+
+### 1-Click Steps:
+1. Open [Google Colab](https://colab.research.google.com) and upload `UrbanTwin_AI_Personalized_Model_Colab.ipynb`.
+2. Select **Runtime** > **Change runtime type** > **T4 GPU**.
+3. Run all cells to train the **STN-CRNN OCR model** and **XGBoost Traffic Predictor**.
+4. The notebook automatically downloads `urbantwin_personalized_ocr.pth`.
+5. Place the checkpoint in `backend/training/urbantwin_personalized_ocr.pth` and start the backend to enjoy live deep learning inference!
+
+---
+
 ## 🌐 API Endpoints & Documentation
 
 Once running, interactive documentation is accessible at:
