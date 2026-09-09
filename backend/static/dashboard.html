@@ -114,6 +114,20 @@
       100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
 
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    @media (max-width: 640px) {
+      #city-map, #trajectory-map, #corridor-map {
+        height: 320px !important;
+      }
+    }
+
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -130,10 +144,10 @@
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col bg-[#050811] text-slate-100">
+<body class="min-h-screen flex flex-col bg-[#050811] text-slate-100 overflow-x-hidden">
 
   <!-- TOP APP HEADER -->
-  <header class="glass-card sticky top-0 z-50 rounded-none border-t-0 border-x-0 px-6 py-3 flex items-center justify-between border-b border-cyan-500/20 bg-slate-950/85 backdrop-blur-xl">
+  <header class="glass-card sticky top-0 z-50 rounded-none border-t-0 border-x-0 px-4 sm:px-6 py-3 flex items-center justify-between border-b border-cyan-500/20 bg-slate-950/90 backdrop-blur-xl">
     <div class="flex items-center space-x-3">
       <a href="/" class="flex items-center space-x-2.5 hover:opacity-90 transition">
         <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-md glow-cyan">
@@ -144,12 +158,12 @@
             <span class="brand-font text-lg font-extrabold text-white tracking-wide">UrbanTwin</span>
             <span class="bg-cyan-500/20 text-cyan-400 text-[10px] font-bold px-1.5 py-0.5 rounded border border-cyan-500/30">AI</span>
           </div>
-          <p class="text-[10px] text-gray-400 font-mono">ANPR Digital Twin Operations</p>
+          <p class="text-[10px] text-gray-400 font-mono hidden xs:block">ANPR Digital Twin Operations</p>
         </div>
       </a>
     </div>
 
-    <!-- CENTER TAB SWITCHER -->
+    <!-- CENTER TAB SWITCHER (DESKTOP) -->
     <nav class="hidden lg:flex items-center space-x-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
       <button onclick="switchTab('3dtwin')" id="nav-3dtwin" class="tab-btn px-3 py-1.5 rounded-lg text-white bg-cyan-600/30 border border-cyan-500/40 transition flex items-center space-x-1.5">
         <i class="fa-solid fa-cube text-cyan-400"></i>
@@ -184,7 +198,7 @@
     </nav>
 
     <!-- RIGHT ACTION & TIME HUD -->
-    <div class="flex items-center space-x-3">
+    <div class="flex items-center space-x-2 sm:space-x-3">
       <div class="hidden sm:flex items-center space-x-2 bg-slate-900 border border-slate-800 px-2.5 py-1.5 rounded-lg font-mono text-xs text-gray-300">
         <i class="fa-regular fa-clock text-cyan-400"></i>
         <span id="live-clock">10:00:00 UTC</span>
@@ -199,6 +213,40 @@
       </a>
     </div>
   </header>
+
+  <!-- MOBILE & TABLET RESPONSIVE TAB BAR (Always accessible on screens < 1024px) -->
+  <div class="lg:hidden px-3 sm:px-6 pt-3 pb-1 w-full max-w-7xl mx-auto overflow-x-auto no-scrollbar scroll-smooth">
+    <nav class="flex items-center space-x-1.5 bg-slate-900/95 p-1.5 rounded-xl border border-slate-800 text-xs font-semibold whitespace-nowrap min-w-max shadow-lg">
+      <button onclick="switchTab('3dtwin')" id="mobile-nav-3dtwin" class="tab-btn px-3 py-1.5 rounded-lg text-white bg-cyan-600/30 border border-cyan-500/40 transition flex items-center space-x-1.5">
+        <i class="fa-solid fa-cube text-cyan-400"></i>
+        <span>3D City Twin</span>
+      </button>
+      <button onclick="switchTab('tracking')" id="mobile-nav-tracking" class="tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+        <i class="fa-solid fa-route text-cyan-400"></i>
+        <span>Trajectory</span>
+      </button>
+      <button onclick="switchTab('corridor')" id="mobile-nav-corridor" class="tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+        <i class="fa-solid fa-truck-medical text-emerald-400"></i>
+        <span>Corridor</span>
+      </button>
+      <button onclick="switchTab('macro')" id="mobile-nav-macro" class="tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+        <i class="fa-solid fa-chart-network text-amber-400"></i>
+        <span>Macro Flow</span>
+      </button>
+      <button onclick="switchTab('ocr')" id="mobile-nav-ocr" class="tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+        <i class="fa-solid fa-flask text-emerald-400"></i>
+        <span>ANPR OCR Lab</span>
+      </button>
+      <button onclick="switchTab('alerts')" id="mobile-nav-alerts" class="tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+        <i class="fa-solid fa-triangle-exclamation text-rose-400"></i>
+        <span>Alerts & Radar</span>
+      </button>
+      <button onclick="switchTab('simulation')" id="mobile-nav-simulation" class="tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+        <i class="fa-solid fa-sliders text-purple-400"></i>
+        <span>What-If</span>
+      </button>
+    </nav>
+  </div>
 
   <!-- TOP KPI METRIC RIBBON -->
   <div class="px-6 pt-5 max-w-7xl w-full mx-auto">
@@ -992,25 +1040,96 @@
 
           <!-- Run Test Button -->
           <div class="flex items-end">
-            <button onclick="runOCRTest()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs transition shadow-md glow-emerald flex items-center justify-center space-x-2">
+            <button id="ocr-run-btn" onclick="runOCRTest()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs transition shadow-md glow-emerald flex items-center justify-center space-x-2">
               <i class="fa-solid fa-microchip"></i>
               <span>Run Deep OCR Inference</span>
             </button>
           </div>
         </div>
 
+        <!-- Quick Presets -->
+        <div class="flex flex-wrap items-center gap-2 pt-1 text-xs">
+          <span class="text-gray-400 font-mono text-[11px] font-semibold uppercase">Presets:</span>
+          <button onclick="setOCRPreset('7XYZ912', 'rain')" class="px-2.5 py-1 bg-slate-900 hover:bg-emerald-950/60 text-slate-300 hover:text-emerald-300 rounded border border-slate-700 hover:border-emerald-500/40 transition font-mono">
+            7XYZ912 <span class="text-[10px] text-gray-500">(Rain)</span>
+          </button>
+          <button onclick="setOCRPreset('KA01MJ5021', 'glare')" class="px-2.5 py-1 bg-slate-900 hover:bg-emerald-950/60 text-slate-300 hover:text-emerald-300 rounded border border-slate-700 hover:border-emerald-500/40 transition font-mono">
+            KA01MJ5021 <span class="text-[10px] text-gray-500">(Glare)</span>
+          </button>
+          <button onclick="setOCRPreset('MH12PQ8899', 'motion_blur')" class="px-2.5 py-1 bg-slate-900 hover:bg-emerald-950/60 text-slate-300 hover:text-emerald-300 rounded border border-slate-700 hover:border-emerald-500/40 transition font-mono">
+            MH12PQ8899 <span class="text-[10px] text-gray-500">(Motion)</span>
+          </button>
+          <button onclick="setOCRPreset('3ABC456', 'dirty')" class="px-2.5 py-1 bg-slate-900 hover:bg-rose-950/60 text-slate-300 hover:text-rose-300 rounded border border-slate-700 hover:border-rose-500/40 transition font-mono">
+            3ABC456 <span class="text-[10px] text-rose-400">(Warrant/Mud)</span>
+          </button>
+          <button onclick="setOCRPreset('DL08CA1990', 'oblique_angle')" class="px-2.5 py-1 bg-slate-900 hover:bg-cyan-950/60 text-slate-300 hover:text-cyan-300 rounded border border-slate-700 hover:border-cyan-500/40 transition font-mono">
+            DL08CA1990 <span class="text-[10px] text-cyan-400">(45° Skew)</span>
+          </button>
+        </div>
+
+        <!-- Live Image Crop & Edge Frame Extraction Studio -->
+        <div class="bg-slate-950/70 p-4 rounded-xl border border-slate-800 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="text-xs font-bold text-white font-mono uppercase flex items-center space-x-2">
+              <i class="fa-solid fa-camera text-cyan-400"></i>
+              <span>Edge Frame & Custom Plate Crop Test Studio</span>
+            </div>
+            <div class="flex items-center space-x-2 text-[11px]">
+              <label for="ocr-image-file" class="cursor-pointer px-3 py-1 bg-cyan-900/60 hover:bg-cyan-800 text-cyan-200 rounded border border-cyan-500/40 font-semibold transition flex items-center space-x-1.5">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span>Upload Plate Photo</span>
+              </label>
+              <input type="file" id="ocr-image-file" accept="image/*" class="hidden" onchange="handleOCRImageUpload(event)" />
+            </div>
+          </div>
+
+          <!-- Sample Camera Frame Presets -->
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <span class="text-gray-400 font-mono text-[10px] uppercase">Test Samples:</span>
+            <button onclick="loadSamplePlateCrop('KA01MJ5021', 'rain')" class="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-gray-300 hover:text-white rounded border border-slate-700 text-[11px] transition">
+              <i class="fa-solid fa-cloud-rain text-cyan-400 mr-1"></i>Rain Sighting (CAM_01)
+            </button>
+            <button onclick="loadSamplePlateCrop('MH12PQ8899', 'glare')" class="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-gray-300 hover:text-white rounded border border-slate-700 text-[11px] transition">
+              <i class="fa-solid fa-sun text-amber-400 mr-1"></i>Night Glare (CAM_03)
+            </button>
+            <button onclick="loadSamplePlateCrop('3ABC456', 'motion_blur')" class="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-gray-300 hover:text-white rounded border border-slate-700 text-[11px] transition">
+              <i class="fa-solid fa-gauge text-emerald-400 mr-1"></i>Highway Blur (CAM_05)
+            </button>
+          </div>
+
+          <!-- Image Preview Display Container (Dynamic) -->
+          <div id="ocr-image-preview-box" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-slate-900/90 rounded-lg border border-cyan-500/30">
+            <div>
+              <div class="text-[10px] text-gray-400 font-mono uppercase mb-1">Source Camera Capture:</div>
+              <div class="h-24 bg-slate-950 rounded border border-slate-800 flex items-center justify-center overflow-hidden p-1">
+                <img id="ocr-uploaded-preview" class="max-h-full object-contain rounded" alt="Plate Crop Preview" />
+              </div>
+            </div>
+            <div class="flex flex-col justify-between text-xs space-y-1.5">
+              <div>
+                <div class="text-[10px] text-gray-400 font-mono uppercase mb-1">Extracted Plate Text:</div>
+                <div class="font-mono text-sm font-bold text-cyan-300 bg-slate-950 p-2 rounded border border-slate-800 flex items-center justify-between">
+                  <span id="ocr-extracted-text">--</span>
+                  <span class="text-[10px] text-emerald-400 font-bold bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/40">STN-CRNN Inferred</span>
+                </div>
+              </div>
+              <p class="text-[10px] text-gray-400">Cropped license plate normalized via 4-point perspective unwarping and character sequence decoding.</p>
+            </div>
+          </div>
+        </div>
+
         <!-- OCR Visual Result Viewport -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
           <!-- Visual SVG Render -->
           <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-3">
             <div class="flex justify-between items-center text-xs">
               <span class="text-gray-400 font-mono uppercase">STN Rectified & Preprocessed Plate Crop</span>
               <span id="ocr-accuracy-badge" class="px-2 py-0.5 bg-emerald-950 text-emerald-400 font-bold rounded border border-emerald-500/30 text-xs">95.4% Accuracy</span>
             </div>
-            <div id="ocr-svg-container" class="max-w-xs mx-auto py-2">
+            <div id="ocr-svg-container" class="w-full max-w-sm mx-auto py-2 flex items-center justify-center">
               <!-- Dynamically populated via JS -->
             </div>
-            <div class="flex justify-between text-[11px] text-gray-400 font-mono pt-1">
+            <div class="flex flex-wrap justify-between text-[11px] text-gray-400 font-mono pt-1 gap-2 border-t border-slate-900">
               <span>Preprocessing: <strong id="ocr-rect-type" class="text-cyan-300">CLAHE + Retinex</strong></span>
               <span>Inference: <strong id="ocr-latency" class="text-emerald-400">22.4 ms</strong></span>
             </div>
@@ -1019,16 +1138,16 @@
           <!-- Character-by-Character Breakdown -->
           <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-3 flex flex-col justify-between">
             <div>
-              <div class="text-xs font-bold text-white uppercase font-mono pb-2 border-b border-slate-800 flex justify-between">
+              <div class="text-xs font-bold text-white uppercase font-mono pb-2 border-b border-slate-800 flex justify-between items-center">
                 <span>Character-Level Confidence</span>
-                <span class="text-emerald-400">All >90% Pass</span>
+                <span class="text-emerald-400 text-[11px]">All >90% Pass</span>
               </div>
-              <div id="ocr-char-breakdown" class="grid grid-cols-7 gap-1.5 pt-3 text-center font-mono">
+              <div id="ocr-char-breakdown" class="flex flex-wrap justify-center sm:justify-start gap-1.5 pt-3 text-center font-mono">
                 <!-- Dynamically populated via JS -->
               </div>
             </div>
 
-            <div class="p-3 bg-slate-900/90 rounded-lg border border-slate-800 text-[11px] text-gray-300 space-y-1">
+            <div class="p-3 bg-slate-900/90 rounded-lg border border-slate-800 text-[11px] text-gray-300 space-y-1 mt-3">
               <div class="text-emerald-400 font-bold flex items-center space-x-1">
                 <i class="fa-solid fa-circle-check"></i>
                 <span>HIGH PRECISION THRESHOLD CONFIRMED</span>

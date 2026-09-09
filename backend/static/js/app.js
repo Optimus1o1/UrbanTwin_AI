@@ -70,6 +70,15 @@ window.switchTab = function (tabId) {
     activeBtn.classList.add('text-white', 'bg-cyan-600/30', 'border-cyan-500/40');
   }
 
+  const activeMobileBtn = document.getElementById(`mobile-nav-${tabId}`);
+  if (activeMobileBtn) {
+    activeMobileBtn.classList.remove('text-slate-400');
+    activeMobileBtn.classList.add('text-white', 'bg-cyan-600/30', 'border-cyan-500/40');
+    try {
+      activeMobileBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    } catch (_) {}
+  }
+
   if (tabId === '3dtwin') {
     setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
@@ -1936,4 +1945,204 @@ function showCorridorToast(msg) {
   toast.innerHTML = `<i class="fa-solid fa-truck-medical text-emerald-400"></i><span>${msg}</span>`;
   setTimeout(() => { if (toast) toast.remove(); }, 4000);
 }
+
+// =========================================================================
+// TAB 4: ANPR OCR INSPECTION LAB CONTROLLER
+// =========================================================================
+window.setOCRPreset = function (plate, degradation) {
+  const plateInput = document.getElementById('ocr-plate-input');
+  const degSelect = document.getElementById('ocr-degradation-select');
+  if (plateInput) plateInput.value = plate;
+  if (degSelect && degradation) degSelect.value = degradation;
+  runOCRTest();
+};
+
+window.runOCRTest = async function () {
+  const plateInput = document.getElementById('ocr-plate-input');
+  const degSelect = document.getElementById('ocr-degradation-select');
+  const btn = document.getElementById('ocr-run-btn');
+  const svgContainer = document.getElementById('ocr-svg-container');
+  const charBreakdown = document.getElementById('ocr-char-breakdown');
+  const badge = document.getElementById('ocr-accuracy-badge');
+  const rectType = document.getElementById('ocr-rect-type');
+  const latency = document.getElementById('ocr-latency');
+  const kpiOcr = document.getElementById('kpi-ocr');
+
+  const rawPlate = (plateInput && plateInput.value.trim()) ? plateInput.value.trim().toUpperCase() : '7XYZ912';
+  const degradation = degSelect ? degSelect.value : 'rain';
+
+  // Loading state
+  if (btn) {
+    btn.disabled = true;
+    btn.classList.add('opacity-75');
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i><span>Running Neural Inference...</span>`;
+  }
+  if (svgContainer && !svgContainer.innerHTML.trim()) {
+    svgContainer.innerHTML = `<div class="py-6 text-center text-xs font-mono text-cyan-400 animate-pulse"><i class="fa-solid fa-microchip text-lg mb-2 block"></i>Processing Spatial Transformer Homography...</div>`;
+  }
+
+  try {
+    const res = await fetch('/api/v1/cameras/ocr_test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plate_text: rawPlate, degradation: degradation })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+
+      // 1. Render SVG Plate Crop
+      if (svgContainer) {
+        svgContainer.innerHTML = data.ocr_visual_svg;
+      }
+
+      // 2. Accuracy Badge
+      if (badge) {
+        badge.innerText = `${data.overall_accuracy_pct.toFixed(1)}% Accuracy (${data.passes_90_pct_threshold ? 'PASS' : 'FLAGGED'})`;
+        if (data.passes_90_pct_threshold) {
+          badge.className = 'px-2.5 py-0.5 bg-emerald-950 text-emerald-400 font-bold rounded border border-emerald-500/40 text-xs flex items-center space-x-1';
+        } else {
+          badge.className = 'px-2.5 py-0.5 bg-amber-950 text-amber-400 font-bold rounded border border-amber-500/40 text-xs flex items-center space-x-1';
+        }
+      }
+
+      // 3. Preprocessing and Latency
+      if (rectType) rectType.innerText = data.rectification_applied || 'CLAHE + Retinex';
+      if (latency) latency.innerText = `${data.processing_time_ms.toFixed(1)} ms`;
+
+      // 4. Character Breakdown Cards
+      if (charBreakdown && data.character_breakdown) {
+        charBreakdown.innerHTML = data.character_breakdown.map((item) => {
+          const pct = (item.confidence * 100).toFixed(1);
+          const isHigh = item.confidence >= 0.90;
+          const borderColor = isHigh ? 'border-emerald-500/40 bg-emerald-950/40' : 'border-amber-500/40 bg-amber-950/40';
+          const textColor = isHigh ? 'text-emerald-400' : 'text-amber-400';
+          const statusBg = isHigh ? 'text-emerald-400 bg-emerald-950/80 border-emerald-500/30' : 'text-amber-400 bg-amber-950/80 border-amber-500/30';
+          return `
+            <div class="p-2 rounded-lg border ${borderColor} flex flex-col items-center justify-between min-w-[42px] transition hover:scale-105">
+              <span class="text-base font-extrabold text-white font-mono">${item.char}</span>
+              <span class="text-[10px] font-bold ${textColor} mt-1">${pct}%</span>
+              <span class="text-[8px] uppercase tracking-wider px-1 py-0.2 rounded border mt-1 font-semibold ${statusBg}">${item.status || (isHigh ? 'PASS' : 'RECT')}</span>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // 5. Update Top Ribbon KPI
+      if (kpiOcr) {
+        kpiOcr.innerHTML = `${data.overall_accuracy_pct.toFixed(1)}% <span class="text-xs text-gray-400 font-normal">(>90% Spec)</span>`;
+      }
+    } else {
+      console.warn("OCR test returned non-200 status:", res.status);
+    }
+  } catch (err) {
+    console.error("Failed executing OCR test:", err);
+    if (svgContainer) {
+      svgContainer.innerHTML = `<div class="p-3 text-center text-xs text-rose-400 font-mono"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Network Error connecting to OCR Engine</div>`;
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.remove('opacity-75');
+      btn.innerHTML = `<i class="fa-solid fa-microchip"></i><span>Run Deep OCR Inference</span>`;
+    }
+  }
+};
+
+// Edge Frame & Custom Upload Handlers
+window.handleOCRImageUpload = function (event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const dataUrl = e.target.result;
+    const previewBox = document.getElementById('ocr-image-preview-box');
+    const previewImg = document.getElementById('ocr-uploaded-preview');
+    const extractedTextEl = document.getElementById('ocr-extracted-text');
+    const plateInput = document.getElementById('ocr-plate-input');
+
+    if (previewBox) previewBox.classList.remove('hidden');
+    if (previewImg) previewImg.src = dataUrl;
+
+    // Simulate character extraction or infer from filename/clean string
+    let simulatedPlate = file.name.replace(/\.[^/.]+$/, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (!simulatedPlate || simulatedPlate.length < 4) {
+      simulatedPlate = 'KA03HA2291';
+    }
+    simulatedPlate = simulatedPlate.slice(0, 10);
+
+    if (extractedTextEl) extractedTextEl.innerText = simulatedPlate;
+    if (plateInput) plateInput.value = simulatedPlate;
+
+    // Run OCR degradation benchmark on extracted plate
+    runOCRTest();
+  };
+  reader.readAsDataURL(file);
+};
+
+window.loadSamplePlateCrop = function (plate, degradation) {
+  const previewBox = document.getElementById('ocr-image-preview-box');
+  const previewImg = document.getElementById('ocr-uploaded-preview');
+  const extractedTextEl = document.getElementById('ocr-extracted-text');
+  const plateInput = document.getElementById('ocr-plate-input');
+  const degSelect = document.getElementById('ocr-degradation-select');
+
+  if (previewBox) previewBox.classList.remove('hidden');
+  if (extractedTextEl) extractedTextEl.innerText = plate;
+  if (plateInput) plateInput.value = plate;
+  if (degSelect) degSelect.value = degradation;
+
+  // Generate an authentic synthetic plate crop graphic as DataURL for visual preview
+  const canvas = document.createElement('canvas');
+  canvas.width = 300;
+  canvas.height = 90;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.fillStyle = plate.startsWith('KA') || plate.startsWith('MH') ? '#fef08a' : '#f8fafc';
+    ctx.fillRect(0, 0, 300, 90);
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(0, 0, 300, 90);
+
+    // Blue IND strip
+    ctx.fillStyle = '#0284c7';
+    ctx.fillRect(8, 8, 16, 74);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 8px sans-serif';
+    ctx.fillText('IND', 9, 48);
+
+    // Plate Text
+    ctx.fillStyle = '#0f172a';
+    ctx.font = 'bold 26px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(plate, 165, 54);
+
+    // Simulated degradation overlay on raw crop
+    if (degradation === 'rain') {
+      ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 8; i++) {
+        ctx.beginPath();
+        const rx = 30 + i * 32;
+        ctx.moveTo(rx, 10);
+        ctx.lineTo(rx + 20, 80);
+        ctx.stroke();
+      }
+    } else if (degradation === 'glare') {
+      const grad = ctx.createRadialGradient(150, 20, 10, 150, 20, 100);
+      grad.addColorStop(0, 'rgba(255,255,255,0.7)');
+      grad.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 300, 90);
+    } else if (degradation === 'motion_blur') {
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.fillRect(0, 0, 300, 90);
+    }
+
+    if (previewImg) previewImg.src = canvas.toDataURL();
+  }
+
+  runOCRTest();
+};
 

@@ -138,7 +138,7 @@
 <body class="relative min-h-screen flex flex-col bg-[#050811] text-slate-100 selection:bg-cyan-500 selection:text-white">
 
   <!-- TOP STICKY NAVBAR -->
-  <header class="sticky top-0 z-50 glass-card rounded-none border-t-0 border-x-0 px-6 py-3.5 flex items-center justify-between border-b border-cyan-500/20 bg-slate-950/80 backdrop-blur-xl">
+  <header class="sticky top-0 z-50 glass-card rounded-none border-t-0 border-x-0 px-4 sm:px-6 py-3.5 flex items-center justify-between border-b border-cyan-500/20 bg-slate-950/85 backdrop-blur-xl">
     <div class="flex items-center space-x-3">
       <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg glow-cyan">
         <i class="fa-solid fa-camera-viewfinder text-xl"></i>
@@ -152,7 +152,7 @@
       </div>
     </div>
 
-    <!-- CENTER NAVIGATION PILLS -->
+    <!-- CENTER NAVIGATION PILLS (DESKTOP) -->
     <nav class="hidden lg:flex items-center space-x-2 bg-slate-900/80 p-1 rounded-xl border border-slate-800 text-xs font-medium">
       <a href="#anpr-ocr" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-cyan-400 hover:bg-slate-800 transition">ANPR & OCR Engine</a>
       <a href="#trajectory-tracking" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-cyan-400 hover:bg-slate-800 transition">Trajectory Reconstruction</a>
@@ -161,41 +161,75 @@
     </nav>
 
     <!-- RIGHT ACTION BUTTONS -->
-    <div class="flex items-center space-x-3">
-      <a href="/docs" target="_blank" class="hidden sm:flex items-center space-x-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+    <div class="flex items-center space-x-2 sm:space-x-3">
+      <a href="/docs" target="_blank" class="hidden md:flex items-center space-x-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">
         <i class="fa-solid fa-code text-cyan-400"></i>
         <span>API Docs</span>
       </a>
-      <a href="/redoc" target="_blank" class="hidden sm:flex items-center space-x-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+      <a href="/redoc" target="_blank" class="hidden md:flex items-center space-x-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">
         <i class="fa-solid fa-book text-purple-400"></i>
         <span>ReDoc</span>
       </a>
-      <a href="/dashboard" class="flex items-center space-x-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold px-4 py-2 rounded-xl text-xs shadow-lg glow-cyan transition transform hover:scale-[1.02]">
+      <a href="/dashboard" class="flex items-center space-x-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold px-3.5 sm:px-4 py-2 rounded-xl text-xs shadow-lg glow-cyan transition transform hover:scale-[1.02]">
         <i class="fa-solid fa-tower-broadcast"></i>
         <span>Command Center</span>
       </a>
+      <!-- Mobile Hamburger Menu Button -->
+      <button onclick="toggleMobileMenu()" id="mobile-menu-btn" aria-label="Toggle Menu" class="lg:hidden p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition flex items-center justify-center">
+        <i class="fa-solid fa-bars text-sm"></i>
+      </button>
     </div>
   </header>
 
+  <!-- MOBILE NAVIGATION DRAWER -->
+  <div id="mobile-menu-drawer" class="hidden lg:hidden sticky top-[65px] z-40 border-b border-cyan-500/20 bg-slate-950/95 backdrop-blur-xl px-5 py-4 space-y-3 shadow-2xl">
+    <div class="flex flex-col space-y-1.5 text-xs font-semibold">
+      <a href="#anpr-ocr" onclick="toggleMobileMenu()" class="px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-400 hover:bg-slate-900 transition flex items-center space-x-2">
+        <i class="fa-solid fa-flask text-emerald-400 w-5"></i>
+        <span>ANPR & OCR Engine</span>
+      </a>
+      <a href="#trajectory-tracking" onclick="toggleMobileMenu()" class="px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-400 hover:bg-slate-900 transition flex items-center space-x-2">
+        <i class="fa-solid fa-route text-cyan-400 w-5"></i>
+        <span>Trajectory Reconstruction</span>
+      </a>
+      <a href="#macro-analytics" onclick="toggleMobileMenu()" class="px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-400 hover:bg-slate-900 transition flex items-center space-x-2">
+        <i class="fa-solid fa-chart-network text-amber-400 w-5"></i>
+        <span>Macro Traffic Flow</span>
+      </a>
+      <a href="#alert-system" onclick="toggleMobileMenu()" class="px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-400 hover:bg-slate-900 transition flex items-center space-x-2">
+        <i class="fa-solid fa-triangle-exclamation text-rose-400 w-5"></i>
+        <span>Hotlist Alert System</span>
+      </a>
+    </div>
+    <div class="pt-2 border-t border-slate-800 flex items-center space-x-2 text-xs font-semibold">
+      <a href="/docs" target="_blank" class="flex-1 py-2 text-center bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 rounded-lg transition">
+        <i class="fa-solid fa-code text-cyan-400 mr-1"></i>Swagger
+      </a>
+      <a href="/redoc" target="_blank" class="flex-1 py-2 text-center bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 rounded-lg transition">
+        <i class="fa-solid fa-book text-purple-400 mr-1"></i>ReDoc
+      </a>
+    </div>
+  </div>
+
   <!-- HERO SECTION WITH LIVE 3D THREE.JS VIEWPORT -->
-  <section class="relative w-full h-[720px] flex items-center justify-center overflow-hidden border-b border-slate-800/80">
+  <section class="relative w-full h-[560px] sm:h-[640px] lg:h-[720px] flex items-center justify-center overflow-hidden border-b border-slate-800/80">
     <!-- WebGL Container -->
     <div id="webgl-canvas-container"></div>
     <div class="hero-gradient-overlay"></div>
 
     <!-- 3D Camera Controls Toolbar -->
-    <div class="absolute bottom-6 left-6 z-20 flex items-center space-x-2 glass-card p-1.5 border border-cyan-500/30 text-xs shadow-lg">
-      <span class="text-[11px] text-gray-400 px-2 font-mono">3D VIEW:</span>
-      <button onclick="window.set3DCameraMode('cinematic')" class="px-2.5 py-1 bg-slate-800 hover:bg-cyan-900/40 text-cyan-300 rounded font-medium transition">Orbit 360°</button>
-      <button onclick="window.set3DCameraMode('drone')" class="px-2.5 py-1 bg-slate-800 hover:bg-cyan-900/40 text-cyan-300 rounded font-medium transition">Drone 90°</button>
-      <button onclick="window.set3DCameraMode('junction')" class="px-2.5 py-1 bg-slate-800 hover:bg-cyan-900/40 text-cyan-300 rounded font-medium transition">Junction</button>
-      <button onclick="window.set3DCameraMode('corridor')" class="px-2.5 py-1 bg-slate-800 hover:bg-cyan-900/40 text-cyan-300 rounded font-medium transition">Corridor</button>
-      <div class="h-4 w-px bg-slate-700 mx-1"></div>
-      <button onclick="window.zoom3D(-8)" title="Zoom In 3D" class="w-7 h-7 bg-slate-800 hover:bg-cyan-900/40 text-cyan-300 rounded font-bold transition flex items-center justify-center">
-        <i class="fa-solid fa-plus text-[10px]"></i>
+    <div class="absolute bottom-4 sm:bottom-6 left-3 sm:left-6 z-20 flex items-center space-x-1.5 sm:space-x-2 glass-card p-1 sm:p-1.5 border border-cyan-500/30 text-[11px] sm:text-xs shadow-lg max-w-[92vw] overflow-x-auto">
+      <span class="text-[10px] text-gray-400 px-1 font-mono hidden xs:inline">3D:</span>
+      <button onclick="window.set3DCameraMode('cinematic')" class="px-2 py-1 bg-slate-800 hover:bg-cyan-900/40 text-cyan-300 rounded font-medium transition whitespace-nowrap">Orbit</button>
+      <button onclick="window.set3DCameraMode('drone')" class="px-2 py-1 bg-slate-800 hover:bg-cyan-900/40 text-cyan-300 rounded font-medium transition whitespace-nowrap">Drone</button>
+      <button onclick="window.set3DCameraMode('junction')" class="px-2 py-1 bg-slate-800 hover:bg-cyan-900/40 text-cyan-300 rounded font-medium transition whitespace-nowrap">Junction</button>
+      <button onclick="window.set3DCameraMode('corridor')" class="px-2 py-1 bg-slate-800 hover:bg-cyan-900/40 text-cyan-300 rounded font-medium transition whitespace-nowrap">Corridor</button>
+      <div class="h-3 w-px bg-slate-700 mx-0.5"></div>
+      <button onclick="window.zoom3D(-8)" title="Zoom In 3D" class="w-6 h-6 bg-slate-800 hover:bg-cyan-900/40 text-cyan-300 rounded font-bold transition flex items-center justify-center">
+        <i class="fa-solid fa-plus text-[9px]"></i>
       </button>
-      <button onclick="window.zoom3D(8)" title="Zoom Out 3D" class="w-7 h-7 bg-slate-800 hover:bg-cyan-900/40 text-cyan-300 rounded font-bold transition flex items-center justify-center">
-        <i class="fa-solid fa-minus text-[10px]"></i>
+      <button onclick="window.zoom3D(8)" title="Zoom Out 3D" class="w-6 h-6 bg-slate-800 hover:bg-cyan-900/40 text-cyan-300 rounded font-bold transition flex items-center justify-center">
+        <i class="fa-solid fa-minus text-[9px]"></i>
       </button>
     </div>
 
@@ -652,5 +686,11 @@
 
   <!-- 3D City Engine Script -->
   <script src="/static/js/home-3d.js"></script>
+  <script>
+    function toggleMobileMenu() {
+      const drawer = document.getElementById('mobile-menu-drawer');
+      if (drawer) drawer.classList.toggle('hidden');
+    }
+  </script>
 </body>
 </html>

@@ -22,34 +22,60 @@ def generate_plate_svg(plate_text: str, degradation: str, accuracy_pct: float) -
     """Generates an illustrative vector SVG representation of the license plate with character bounding boxes."""
     bg_color = "#fef08a" if "KA" in plate_text or "MH" in plate_text else "#f8fafc"
     text_color = "#0f172a"
+    clean_chars = [c for c in plate_text if c.isalnum()]
+    if not clean_chars:
+        clean_chars = list("7XYZ912")
+    num_chars = len(clean_chars)
+    
+    # Dynamic layout calculation based on character count
+    char_w = 24 if num_chars > 8 else 28
+    char_step = 27 if num_chars > 8 else 32
+    start_x = 35
+    plate_inner_w = (num_chars * char_step) + 20
+    total_svg_w = max(320, start_x + plate_inner_w)
     
     # Degradation effect simulation
     filter_overlay = ""
     if degradation == "rain":
-        filter_overlay = '<line x1="20" y1="10" x2="40" y2="70" stroke="rgba(255,255,255,0.4)" stroke-width="2"/><line x1="120" y1="5" x2="140" y2="75" stroke="rgba(255,255,255,0.4)" stroke-width="2"/><line x1="220" y1="12" x2="240" y2="72" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>'
+        filter_overlay = f'''
+        <line x1="20" y1="10" x2="40" y2="70" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+        <line x1="120" y1="5" x2="140" y2="75" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+        <line x1="{total_svg_w - 60}" y1="12" x2="{total_svg_w - 40}" y2="72" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+        <line x1="70" y1="20" x2="90" y2="80" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+        '''
     elif degradation == "glare":
-        filter_overlay = '<ellipse cx="140" cy="20" rx="90" ry="30" fill="rgba(255,255,255,0.35)"/>'
+        filter_overlay = f'<ellipse cx="{total_svg_w // 2}" cy="20" rx="{total_svg_w // 3}" ry="32" fill="rgba(255,255,255,0.38)"/>'
     elif degradation == "dirty":
-        filter_overlay = '<circle cx="60" cy="50" r="18" fill="rgba(60,40,20,0.35)"/><circle cx="190" cy="35" r="14" fill="rgba(60,40,20,0.3)"/>'
+        filter_overlay = f'<circle cx="60" cy="50" r="18" fill="rgba(60,40,20,0.35)"/><circle cx="{total_svg_w - 80}" cy="35" r="15" fill="rgba(60,40,20,0.3)"/><circle cx="{total_svg_w // 2}" cy="65" r="12" fill="rgba(60,40,20,0.25)"/>'
+    elif degradation == "motion_blur":
+        filter_overlay = f'<rect x="0" y="0" width="{total_svg_w}" height="90" fill="url(#motionGrad)" opacity="0.4"/>'
+    elif degradation == "oblique_angle":
+        filter_overlay = f'<polygon points="0,0 {total_svg_w},12 {total_svg_w},78 0,90" fill="none" stroke="rgba(6,182,212,0.5)" stroke-width="1.5" stroke-dasharray="4,4"/>'
 
     char_boxes = ""
-    start_x = 35
-    for i, ch in enumerate(plate_text):
-        cx = start_x + (i * 32)
-        char_boxes += f'<rect x="{cx-2}" y="18" width="28" height="46" fill="rgba(6,182,212,0.08)" stroke="rgba(6,182,212,0.6)" stroke-width="1" rx="3"/>'
-        char_boxes += f'<text x="{cx+12}" y="52" font-family="JetBrains Mono, monospace" font-size="28" font-weight="bold" fill="{text_color}" text-anchor="middle">{ch}</text>'
-        char_boxes += f'<text x="{cx+12}" y="74" font-family="sans-serif" font-size="9" font-weight="600" fill="#10b981" text-anchor="middle">{random.randint(92, 99)}%</text>'
+    for i, ch in enumerate(clean_chars):
+        cx = start_x + (i * char_step)
+        char_conf = random.randint(92, 99) if accuracy_pct >= 90 else random.randint(84, 91)
+        conf_color = "#10b981" if char_conf >= 90 else "#f59e0b"
+        char_boxes += f'<rect x="{cx-2}" y="18" width="{char_w}" height="46" fill="rgba(6,182,212,0.08)" stroke="rgba(6,182,212,0.6)" stroke-width="1" rx="3"/>'
+        char_boxes += f'<text x="{cx+(char_w//2)}" y="52" font-family="JetBrains Mono, monospace" font-size="{24 if num_chars > 8 else 28}" font-weight="bold" fill="{text_color}" text-anchor="middle">{ch}</text>'
+        char_boxes += f'<text x="{cx+(char_w//2)}" y="74" font-family="sans-serif" font-size="8.5" font-weight="600" fill="{conf_color}" text-anchor="middle">{char_conf}%</text>'
 
     svg = f'''
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 90" width="100%" height="90" class="rounded-lg shadow-inner">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {total_svg_w} 90" width="100%" height="90" class="rounded-lg shadow-inner">
       <defs>
         <linearGradient id="plateGrad" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stop-color="{bg_color}" />
           <stop offset="100%" stop-color="#e2e8f0" />
         </linearGradient>
+        <linearGradient id="motionGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="rgba(255,255,255,0)" />
+          <stop offset="50%" stop-color="rgba(255,255,255,0.3)" />
+          <stop offset="100%" stop-color="rgba(255,255,255,0)" />
+        </linearGradient>
       </defs>
-      <rect width="320" height="90" rx="8" fill="url(#plateGrad)" stroke="#334155" stroke-width="4"/>
-      <rect x="6" y="6" width="308" height="78" rx="6" fill="none" stroke="#64748b" stroke-width="1.5"/>
+      <rect width="{total_svg_w}" height="90" rx="8" fill="url(#plateGrad)" stroke="#334155" stroke-width="4"/>
+      <rect x="6" y="6" width="{total_svg_w - 12}" height="78" rx="6" fill="none" stroke="#64748b" stroke-width="1.5"/>
       <rect x="10" y="10" width="16" height="70" rx="3" fill="#0284c7"/>
       <text x="18" y="52" font-family="sans-serif" font-size="9" font-weight="bold" fill="#ffffff" transform="rotate(-90 18,52)" text-anchor="middle">IND</text>
       {char_boxes}
@@ -124,7 +150,10 @@ def test_ocr_degradation_pipeline(req: OCRTestRequest) -> OCRTestResponse:
 
     # Check if personalized trained model is available for live inference
     try:
-        from training.inference import run_inference_on_plate, is_personalized_model_active
+        try:
+            from training.inference import run_inference_on_plate, is_personalized_model_active
+        except ImportError:
+            from backend.training.inference import run_inference_on_plate, is_personalized_model_active
         if is_personalized_model_active():
             inf_res = run_inference_on_plate(clean_plate, req.degradation.lower())
             if inf_res and inf_res[0] and inf_res[1] >= 0.70:
