@@ -257,12 +257,34 @@ class SimulationComparisonItem(BaseModel):
     change_pct: float
     is_improvement: bool
 
+class RoadSimulationMetric(BaseModel):
+    road_id: str
+    road_name: str
+    start_node: str
+    end_node: str
+    length_km: float
+    base_congestion_pct: float
+    simulated_congestion_pct: float
+    base_speed_kmh: float
+    simulated_speed_kmh: float
+    status: str = "NORMAL" # "CLOSED", "DETOUR_CONGESTED", "NORMAL", "FREE_FLOW"
+    is_closed: bool = False
+    is_detour: bool = False
+    traffic_flow_vph: int = 600
+
 class SimulationResult(BaseModel):
     scenario_id: str
     description: str
     metrics: List[SimulationComparisonItem]
     affected_roads: List[str]
     timestamp: str
+    overall_congestion_before: float = 64.0
+    overall_congestion_after: float = 76.5
+    avg_speed_before_kmh: float = 26.0
+    avg_speed_after_kmh: float = 20.8
+    avg_delay_before_min: float = 8.2
+    avg_delay_after_min: float = 10.3
+    road_impacts: List[RoadSimulationMetric] = []
 
 # --- Incident Anomaly Schemas ---
 class Anomaly(BaseModel):

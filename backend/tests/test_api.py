@@ -101,6 +101,17 @@ def test_whatif_simulation():
     sim = res.json()
     assert "scenario_id" in sim
     assert len(sim["metrics"]) == 3
+    assert sim["overall_congestion_after"] > 0
+    assert sim["avg_speed_after_kmh"] > 0
+    assert "road_impacts" in sim
+    assert len(sim["road_impacts"]) >= 6
+    
+    # Verify road closure and detour tagging
+    impacts_by_id = {r["road_id"]: r for r in sim["road_impacts"]}
+    assert impacts_by_id["ROAD-A-B"]["is_closed"] is True
+    assert impacts_by_id["ROAD-A-B"]["status"] == "CLOSED"
+    assert impacts_by_id["ROAD-B-C"]["is_detour"] is True
+    assert impacts_by_id["ROAD-B-C"]["status"] == "DETOUR_CONGESTED"
 
 def test_interactive_swagger_and_redoc():
     # Test Swagger UI

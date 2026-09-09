@@ -94,6 +94,14 @@ window.switchTab = function (tabId) {
     runOCRTest();
   } else if (tabId === 'alerts') {
     loadAlerts();
+  } else if (tabId === 'simulation') {
+    setTimeout(() => {
+      if (window.initWhatIf3D) window.initWhatIf3D();
+      if (!window.hasRunWhatIfInitial) {
+        window.hasRunWhatIfInitial = true;
+        window.runSimulation();
+      }
+    }, 80);
   }
 };
 
@@ -830,10 +838,12 @@ async function loadAlerts() {
   }
 }
 
-// WHAT-IF SIMULATION
+// WHAT-IF SIMULATION & 3D DIGITAL TWIN INTEGRATION
 window.runSimulation = async function () {
-  const closure = document.getElementById('sim-closure-select').value;
-  const vol = parseFloat(document.getElementById('sim-volume-slider').value) || 20.0;
+  const closureSelect = document.getElementById('sim-closure-select');
+  const volumeSlider = document.getElementById('sim-volume-slider');
+  const closure = closureSelect ? closureSelect.value : 'ROAD-A-B';
+  const vol = volumeSlider ? (parseFloat(volumeSlider.value) || 20.0) : 20.0;
 
   const payload = {
     closed_roads: closure !== 'none' ? [closure] : [],
@@ -849,19 +859,125 @@ window.runSimulation = async function () {
     });
     if (!res.ok) return;
     const sim = await res.json();
+    window.lastSimulationResult = sim;
 
-    document.getElementById('sim-res-congestion').innerText = `${sim.overall_congestion_after}%`;
-    document.getElementById('sim-res-congestion-delta').innerText = `${sim.metrics[0].change_pct > 0 ? '+' : ''}${sim.metrics[0].change_pct}% change`;
+    const congAfter = sim.overall_congestion_after !== undefined ? sim.overall_congestion_after : (sim.metrics && sim.metrics[0] ? parseFloat(sim.metrics[0].after) : 76.5);
+    const speedAfter = sim.avg_speed_after_kmh !== undefined ? sim.avg_speed_after_kmh : (sim.metrics && sim.metrics[1] ? parseFloat(sim.metrics[1].after) : 20.8);
+    const delayAfter = sim.avg_delay_after_min !== undefined ? sim.avg_delay_after_min : (sim.metrics && sim.metrics[2] ? parseFloat(sim.metrics[2].after) : 10.3);
 
-    document.getElementById('sim-res-speed').innerText = `${sim.avg_speed_after_kmh} km/h`;
-    document.getElementById('sim-res-speed-delta').innerText = `${sim.metrics[1].change_pct > 0 ? '+' : ''}${sim.metrics[1].change_pct}% speed`;
+    const congEl = document.getElementById('sim-res-congestion');
+    if (congEl) congEl.innerText = `${congAfter}%`;
 
-    document.getElementById('sim-res-delay').innerText = `${sim.avg_delay_after_min} min`;
-    document.getElementById('sim-res-delay-delta').innerText = `${sim.metrics[2].change_pct > 0 ? '+' : ''}${sim.metrics[2].change_pct}% delay`;
+    const congDeltaEl = document.getElementById('sim-res-congestion-delta');
+    if (congDeltaEl && sim.metrics && sim.metrics[0]) {
+      congDeltaEl.innerText = `${sim.metrics[0].change_pct > 0 ? '+' : ''}${sim.metrics[0].change_pct}% change`;
+    }
+
+    const speedEl = document.getElementById('sim-res-speed');
+    if (speedEl) speedEl.innerText = `${speedAfter} km/h`;
+
+    const speedDeltaEl = document.getElementById('sim-res-speed-delta');
+    if (speedDeltaEl && sim.metrics && sim.metrics[1]) {
+      speedDeltaEl.innerText = `${sim.metrics[1].change_pct > 0 ? '+' : ''}${sim.metrics[1].change_pct}% speed`;
+    }
+
+    const delayEl = document.getElementById('sim-res-delay');
+    if (delayEl) delayEl.innerText = `${delayAfter} min`;
+
+    const delayDeltaEl = document.getElementById('sim-res-delay-delta');
+    if (delayDeltaEl && sim.metrics && sim.metrics[2]) {
+      delayDeltaEl.innerText = `${sim.metrics[2].change_pct > 0 ? '+' : ''}${sim.metrics[2].change_pct}% delay`;
+    }
+
+    // 1. Pass updated scenario data to 3D simulation visualizer
+    if (window.updateWhatIf3DSimulation) {
+      window.updateWhatIf3DSimulation(sim, closure, vol);
+    }
+
+    // 2. Render road-by-road impact matrix cards
+    renderWhatIfRoadRack(sim.road_impacts || []);
+
   } catch (e) {
     console.error("Simulation error:", e);
   }
 };
+
+function renderWhatIfRoadRack(impacts) {
+  const rack = document.getElementById('whatif-road-breakdown-rack');
+  if (!rack) return;
+  if (!impacts || impacts.length === 0) {
+    rack.innerHTML = '<div class="text-xs text-gray-500 col-span-full py-2">Executing simulation calculations...</div>';
+    return;
+  }
+
+  rack.innerHTML = impacts.map(r => {
+    let badgeClass = 'bg-emerald-950/70 text-emerald-400 border-emerald-500/30';
+    let statusText = 'NORMAL';
+    let icon = 'fa-check';
+
+    if (r.is_closed || r.status === 'CLOSED') {
+      badgeClass = 'bg-rose-950/90 text-rose-300 border-rose-500/50 animate-pulse';
+      statusText = 'CLOSED';
+      icon = 'fa-ban';
+    } else if (r.is_detour || r.status === 'DETOUR_CONGESTED') {
+      badgeClass = 'bg-amber-950/90 text-amber-300 border-amber-500/50';
+      statusText = 'DETOUR SPIKE';
+      icon = 'fa-triangle-exclamation';
+    } else if (r.simulated_congestion_pct > 65) {
+      badgeClass = 'bg-rose-950/90 text-rose-300 border-rose-500/50';
+      statusText = 'HEAVY';
+      icon = 'fa-fire-flame-curved';
+    } else if (r.simulated_congestion_pct < 35) {
+      badgeClass = 'bg-cyan-950/80 text-cyan-300 border-cyan-500/40';
+      statusText = 'FREE FLOW';
+      icon = 'fa-bolt';
+    }
+
+    return `
+      <div class="p-3 bg-slate-950/90 rounded-xl border border-slate-800 space-y-1.5 transition hover:border-cyan-500/40 hover:bg-slate-900/60 shadow-lg">
+        <div class="flex items-center justify-between text-[10px] font-mono">
+          <span class="text-gray-400 truncate max-w-[85px]">${r.road_id}</span>
+          <span class="px-1.5 py-0.5 rounded border text-[9px] font-bold ${badgeClass}">
+            <i class="fa-solid ${icon} mr-0.5"></i>${statusText}
+          </span>
+        </div>
+        <div class="text-xs font-bold text-white truncate" title="${r.road_name}">${r.road_name}</div>
+        <div class="grid grid-cols-2 gap-1 text-[11px] font-mono pt-1 border-t border-slate-800/80">
+          <div>
+            <span class="text-gray-500 text-[10px]">CONG: </span>
+            <span class="${r.simulated_congestion_pct > 65 ? 'text-rose-400 font-bold' : (r.simulated_congestion_pct > 40 ? 'text-amber-400 font-bold' : 'text-emerald-400 font-bold')}">${r.simulated_congestion_pct}%</span>
+          </div>
+          <div>
+            <span class="text-gray-500 text-[10px]">SPD: </span>
+            <span class="text-cyan-300 font-bold">${r.simulated_speed_kmh} km/h</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Reactive debounced slider & select listeners
+let whatIfDebounceTimer = null;
+document.addEventListener('DOMContentLoaded', () => {
+  const closureSelect = document.getElementById('sim-closure-select');
+  const volumeSlider = document.getElementById('sim-volume-slider');
+
+  if (closureSelect) {
+    closureSelect.addEventListener('change', () => {
+      window.runSimulation();
+    });
+  }
+
+  if (volumeSlider) {
+    volumeSlider.addEventListener('input', () => {
+      clearTimeout(whatIfDebounceTimer);
+      whatIfDebounceTimer = setTimeout(() => {
+        window.runSimulation();
+      }, 150);
+    });
+  }
+});
 
 // =========================================================================
 // DYNAMIC EMERGENCY GREEN CORRIDOR ROUTING CONTROLLER
