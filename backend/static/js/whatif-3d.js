@@ -85,11 +85,12 @@
     camera = new THREE.PerspectiveCamera(45, width / height, 1, 1000);
     updateCameraFromSpherical();
 
-    // 3. Renderer
+    // 3. Renderer with optimized Pixel Ratio
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
+    const dpr = Math.min(window.devicePixelRatio || 1, window.innerWidth < 768 ? 1.0 : 1.25);
+    renderer.setPixelRatio(dpr);
+    renderer.shadowMap.enabled = false; // Disable expensive shadow map recalculation
     container.appendChild(renderer.domElement);
 
     // 4. Raycaster & Mouse
@@ -751,9 +752,28 @@
   }
 
   // =========================================================================
-  // ANIMATION LOOP
+  // ANIMATION LOOP WITH AUTO-PAUSE
   // =========================================================================
+  let isWhatIfRunning = true;
+
+  window.pauseWhatIf3D = function () {
+    isWhatIfRunning = false;
+    if (animFrameId) {
+      cancelAnimationFrame(animFrameId);
+      animFrameId = null;
+    }
+  };
+
+  window.resumeWhatIf3D = function () {
+    if (!isWhatIfRunning) {
+      isWhatIfRunning = true;
+      clock.getDelta();
+      animate();
+    }
+  };
+
   function animate() {
+    if (!isWhatIfRunning) return;
     animFrameId = requestAnimationFrame(animate);
 
     const delta = clock.getDelta();
@@ -779,5 +799,17 @@
 
     renderer.render(scene, camera);
   }
+
+  // Pause when browser tab is hidden/minimized
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      window.pauseWhatIf3D();
+    } else {
+      const tabEl = document.getElementById('tab-simulation');
+      if (tabEl && !tabEl.classList.contains('hidden')) {
+        window.resumeWhatIf3D();
+      }
+    }
+  });
 
 })();

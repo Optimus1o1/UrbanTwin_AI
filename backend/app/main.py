@@ -121,14 +121,14 @@ def custom_openapi():
     openapi_schema["security"] = [{"BearerAuth": []}, {"OAuth2PasswordBearer": []}]
 
     openapi_schema["tags"] = [
-        {"name": "Auth", "description": "Authentication, user registration, JWT token lifecycle and role queries."},
-        {"name": "Cameras", "description": "Edge CCTV node registration, telemetry feeds, and optical status."},
-        {"name": "Traffic", "description": "Real-time flow rates, speed analysis, and intersection densities."},
-        {"name": "Vehicles", "description": "Multi-camera vehicle re-identification (ReID) and trajectory tracking."},
-        {"name": "Roads", "description": "Urban road network topology, segment capacity, and physical conditions."},
-        {"name": "Predictions", "description": "AI-powered congestion forecasts and predictive travel-time metrics."},
-        {"name": "Anomalies", "description": "Incident detection (accidents, stalled vehicles, lane blockages) and dispatch."},
-        {"name": "Simulation", "description": "What-if scenario modeling: road closures, signal timing adjustments, and evacuation routing."},
+        {"name": "Authentication", "description": "Authentication, user registration, JWT token lifecycle and role queries."},
+        {"name": "Camera Feeds & ANPR Ingestion", "description": "Edge CCTV node registration, telemetry feeds, optical status, and deep-learning OCR testing."},
+        {"name": "Macro Traffic Flow & OD Analytics", "description": "Real-time flow rates, speed analysis, heatmap densities, OD matrices, and intersection analytics."},
+        {"name": "Vehicle Re-ID & Trajectory Tracking", "description": "Multi-camera vehicle re-identification (ReID), cross-camera matching, and spatial-temporal trajectory reconstruction."},
+        {"name": "Road Network Graph", "description": "Urban road network topology, segment capacity, and physical conditions."},
+        {"name": "Traffic ML Forecasting", "description": "AI-powered XGBoost & LSTM congestion forecasts and predictive travel-time metrics."},
+        {"name": "Alert System & Hotlist Enforcement", "description": "Incident detection, blacklist/hotlist enforcement, behavioral radar threats, and intercept advisories."},
+        {"name": "Digital Twin What-If Simulation", "description": "What-if scenario modeling: road closures, signal timing adjustments, traffic surges, and evacuation routing."},
         {"name": "Green Corridor", "description": "Emergency vehicle tracking, dynamic green wave preemption, and signal automation."},
         {"name": "Health", "description": "Service health probes and cluster uptime telemetry."}
     ]

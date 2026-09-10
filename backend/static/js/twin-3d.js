@@ -108,14 +108,15 @@
     camera = new THREE.PerspectiveCamera(48, aspect, 0.5, 450);
     updateCameraFromSpherical();
 
-    // 3. High-Performance WebGL Renderer with Alpha: true
+    // 3. High-Performance WebGL Renderer with Alpha: true & Capped Pixel Ratio
     renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: true, // Transparent background!
       powerPreference: "high-performance"
     });
     renderer.setSize(container.clientWidth, container.clientHeight || 520);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const dpr = Math.min(window.devicePixelRatio || 1, window.innerWidth < 768 ? 1.0 : 1.25);
+    renderer.setPixelRatio(dpr);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.35;
     container.appendChild(renderer.domElement);
@@ -1748,9 +1749,28 @@
   }
 
   // =========================================================================
-  // MAIN ANIMATION LOOP
+  // MAIN ANIMATION LOOP WITH AUTO-PAUSE
   // =========================================================================
+  let isTwinRendering = true;
+
+  window.pauseDigitalTwin3D = function () {
+    isTwinRendering = false;
+    if (animFrameId) {
+      cancelAnimationFrame(animFrameId);
+      animFrameId = null;
+    }
+  };
+
+  window.resumeDigitalTwin3D = function () {
+    if (!isTwinRendering) {
+      isTwinRendering = true;
+      clock.getDelta();
+      animate();
+    }
+  };
+
   function animate() {
+    if (!isTwinRendering) return;
     animFrameId = requestAnimationFrame(animate);
     const delta = clock.getDelta();
     const time = clock.getElapsedTime();
@@ -1802,6 +1822,19 @@
     // 5. Render Scene
     renderer.render(scene, camera);
   }
+
+  // Pause when browser tab is hidden/minimized
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      window.pauseDigitalTwin3D();
+    } else {
+      // Only resume if tab is active
+      const tabEl = document.getElementById('tab-3dtwin');
+      if (tabEl && !tabEl.classList.contains('hidden')) {
+        window.resumeDigitalTwin3D();
+      }
+    }
+  });
 
   // Auto-init on DOMContentLoaded if container exists
   document.addEventListener('DOMContentLoaded', () => {

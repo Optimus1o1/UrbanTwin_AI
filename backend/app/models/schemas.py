@@ -93,6 +93,13 @@ class OCRTestResponse(BaseModel):
     ocr_visual_svg: str
     passes_90_pct_threshold: bool = True
 
+class OCRUploadResponse(BaseModel):
+    recognized_plate: str
+    recognition_confidence: float
+    recognition_engine: str
+    all_detected_texts: List[str] = []
+    ocr_test_result: OCRTestResponse
+
 # --- Spatial-Temporal Trajectory Tracking Schemas ---
 class TrajectoryWaypoint(BaseModel):
     step: int

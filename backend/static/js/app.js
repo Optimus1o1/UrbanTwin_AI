@@ -55,6 +55,7 @@ function initClock() {
 // TAB SWITCHER
 window.switchTab = function (tabId) {
   currentTab = tabId;
+  if (window.playAudioCue) window.playAudioCue('tab');
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.remove('text-white', 'bg-cyan-600/30', 'border-cyan-500/40');
@@ -77,6 +78,24 @@ window.switchTab = function (tabId) {
     try {
       activeMobileBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     } catch (_) {}
+  }
+
+  // Performance Optimization: Pause inactive 3D & canvas animation loops
+  if (tabId === '3dtwin') {
+    if (window.resumeDigitalTwin3D) window.resumeDigitalTwin3D();
+  } else {
+    if (window.pauseDigitalTwin3D) window.pauseDigitalTwin3D();
+  }
+
+  if (tabId === 'simulation') {
+    if (window.resumeWhatIf3D) window.resumeWhatIf3D();
+  } else {
+    if (window.pauseWhatIf3D) window.pauseWhatIf3D();
+  }
+
+  if (tabId !== 'alerts' && radarAnimFrame) {
+    cancelAnimationFrame(radarAnimFrame);
+    radarAnimFrame = null;
   }
 
   if (tabId === '3dtwin') {
@@ -1241,7 +1260,11 @@ function initBehavioralRadar() {
     ctx.arc(centerX, centerY, maxRadius, 0, Math.PI * 2);
     ctx.stroke();
 
-    radarAnimFrame = requestAnimationFrame(renderRadar);
+    if (currentTab === 'alerts') {
+      radarAnimFrame = requestAnimationFrame(renderRadar);
+    } else {
+      radarAnimFrame = null;
+    }
   }
 
   renderRadar();
@@ -2144,5 +2167,96 @@ window.loadSamplePlateCrop = function (plate, degradation) {
   }
 
   runOCRTest();
+};
+
+// ==================== PROFESSIONAL DESIGNER AUDIO TELEMETRY & CONTROLS ====================
+
+let audioTelemetryEnabled = false;
+let audioCtx = null;
+
+function getAudioContext() {
+  if (!audioCtx && (window.AudioContext || window.webkitAudioContext)) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
+
+window.toggleAudioTelemetry = function () {
+  audioTelemetryEnabled = !audioTelemetryEnabled;
+  const btn = document.getElementById('audio-toggle-btn');
+  const icon = document.getElementById('audio-toggle-icon');
+  const label = document.getElementById('audio-toggle-label');
+  
+  if (audioTelemetryEnabled) {
+    const ctx = getAudioContext();
+    if (ctx) window.playAudioCue('tab');
+    if (btn) {
+      btn.classList.remove('text-slate-400', 'border-slate-800');
+      btn.classList.add('text-cyan-300', 'border-cyan-500/40', 'bg-cyan-950/40');
+    }
+    if (icon) icon.className = 'fa-solid fa-volume-high text-cyan-400';
+    if (label) label.innerText = 'Audio: ON';
+  } else {
+    if (btn) {
+      btn.classList.remove('text-cyan-300', 'border-cyan-500/40', 'bg-cyan-950/40');
+      btn.classList.add('text-slate-400', 'border-slate-800');
+    }
+    if (icon) icon.className = 'fa-solid fa-volume-xmark text-slate-500';
+    if (label) label.innerText = 'Audio: MUTED';
+  }
+};
+
+window.playAudioCue = function (type = 'tab') {
+  if (!audioTelemetryEnabled) return;
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (type === 'tab') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, now);
+      osc.frequency.exponentialRampToValueAtTime(1320, now + 0.05);
+      gain.gain.setValueAtTime(0.03, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+      osc.start(now);
+      osc.stop(now + 0.06);
+    } else if (type === 'alert') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.setValueAtTime(880, now + 0.08);
+      gain.gain.setValueAtTime(0.06, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+      osc.start(now);
+      osc.stop(now + 0.16);
+    } else if (type === 'corridor') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, now);
+      osc.frequency.exponentialRampToValueAtTime(1046.5, now + 0.1);
+      gain.gain.setValueAtTime(0.05, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      osc.start(now);
+      osc.stop(now + 0.12);
+    }
+  } catch (e) {
+    console.warn("Audio cue error:", e);
+  }
+};
+
+window.toggleFullscreen = function () {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
 };
 

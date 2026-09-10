@@ -55,10 +55,11 @@
     camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.5, 300);
     camera.position.set(0, 38, 56);
 
-    // Renderer
+    // Renderer with optimized Pixel Ratio (capping to 1.25 prevents 4x pixel over-draw lag on high-DPI screens)
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
     renderer.setSize(container.clientWidth, container.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const dpr = Math.min(window.devicePixelRatio || 1, window.innerWidth < 768 ? 1.0 : 1.25);
+    renderer.setPixelRatio(dpr);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.2;
     container.appendChild(renderer.domElement);
@@ -552,9 +553,13 @@
     lasersGroup.add(laser);
   };
 
-  // ANIMATION LOOP
+  // ANIMATION LOOP WITH AUTO-PAUSE (Eliminates lag when scrolled offscreen)
+  let isRunning = true;
+  let animFrameId = null;
+
   function animate() {
-    requestAnimationFrame(animate);
+    if (!isRunning) return;
+    animFrameId = requestAnimationFrame(animate);
     const delta = clock.getDelta();
     const elapsed = clock.getElapsedTime();
 
@@ -616,6 +621,42 @@
     renderer.render(scene, camera);
   }
 
+  // IntersectionObserver: Pause rendering completely when hero canvas is scrolled out of viewport
+  if ('IntersectionObserver' in window && container) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          if (!isRunning) {
+            isRunning = true;
+            clock.getDelta(); // reset delta to prevent jump
+            animate();
+          }
+        } else {
+          isRunning = false;
+          if (animFrameId) cancelAnimationFrame(animFrameId);
+        }
+      });
+    }, { threshold: 0.05 });
+    observer.observe(container);
+  }
+
+  // Pause when browser tab is hidden/minimized
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      isRunning = false;
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+    } else {
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        if (rect.bottom > 0 && rect.top < window.innerHeight) {
+          isRunning = true;
+          clock.getDelta();
+          animate();
+        }
+      }
+    }
+  });
+
   // Interactive Orbit / Pan / Zoom State
   let isDragging = false;
   let isRightDragging = false;
@@ -623,6 +664,7 @@
   let spherical = { radius: 68, phi: Math.PI / 4, theta: Math.PI / 4 };
   let hoveredBuilding = null;
   let activeVehicleTarget = null;
+  let raycastThrottleTimer = null;
 
   function updateCameraFromSpherical() {
     spherical.phi = Math.max(0.1, Math.min(Math.PI / 2 - 0.05, spherical.phi));
@@ -666,25 +708,28 @@
       targetLookAt.y += dy * panSpeed;
       updateCameraFromSpherical();
       cameraMode = 'manual';
-    }
-
-    // Hover raycaster for buildings
-    if (!isDragging && !isRightDragging && camera) {
-      raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(buildingsGroup.children, false);
-      if (intersects.length > 0) {
-        const b = intersects[0].object;
-        if (hoveredBuilding !== b) {
-          if (hoveredBuilding && hoveredBuilding.material) hoveredBuilding.material.emissive?.setHex(0x000000);
-          hoveredBuilding = b;
-          if (b.material && b.material.emissive) b.material.emissive.setHex(0x06b6d4);
-          showHoverBuildingTooltip(event.clientX, event.clientY, b);
+    } else if (camera && !raycastThrottleTimer) {
+      // Throttle hover raycaster to at most once per 60ms to eliminate mouse movement stutter
+      raycastThrottleTimer = setTimeout(() => {
+        raycastThrottleTimer = null;
+        if (!isDragging && !isRightDragging && camera && buildingsGroup) {
+          raycaster.setFromCamera(mouse, camera);
+          const intersects = raycaster.intersectObjects(buildingsGroup.children, false);
+          if (intersects.length > 0) {
+            const b = intersects[0].object;
+            if (hoveredBuilding !== b) {
+              if (hoveredBuilding && hoveredBuilding.material) hoveredBuilding.material.emissive?.setHex(0x000000);
+              hoveredBuilding = b;
+              if (b.material && b.material.emissive) b.material.emissive.setHex(0x06b6d4);
+              showHoverBuildingTooltip(event.clientX, event.clientY, b);
+            }
+          } else {
+            if (hoveredBuilding && hoveredBuilding.material) hoveredBuilding.material.emissive?.setHex(0x000000);
+            hoveredBuilding = null;
+            hideHoverBuildingTooltip();
+          }
         }
-      } else {
-        if (hoveredBuilding && hoveredBuilding.material) hoveredBuilding.material.emissive?.setHex(0x000000);
-        hoveredBuilding = null;
-        hideHoverBuildingTooltip();
-      }
+      }, 60);
     }
 
     prevMousePos = { x: event.clientX, y: event.clientY };

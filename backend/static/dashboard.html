@@ -28,21 +28,27 @@
 
   <style>
     :root {
-      --bg-dark: #050811;
-      --card-bg: rgba(13, 20, 36, 0.8);
-      --card-border: rgba(6, 182, 212, 0.2);
+      --bg-base: #030712;
+      --bg-surface: #070d1e;
+      --card-bg: rgba(11, 18, 33, 0.78);
+      --card-border: rgba(6, 182, 212, 0.22);
+      --card-border-hover: rgba(6, 182, 212, 0.6);
       --accent-cyan: #06b6d4;
+      --accent-cyan-bright: #22d3ee;
       --accent-emerald: #10b981;
       --accent-purple: #8b5cf6;
       --accent-amber: #f59e0b;
-      --accent-rose: #ef4444;
+      --accent-rose: #f43f5e;
     }
 
     body {
       font-family: 'Inter', sans-serif;
-      background-color: var(--bg-dark);
+      background-color: var(--bg-base);
       color: #f1f5f9;
       overflow-x: hidden;
+      background-image: 
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(6, 182, 212, 0.12), transparent),
+        radial-gradient(ellipse 60% 40% at 85% 60%, rgba(139, 92, 246, 0.07), transparent);
     }
 
     h1, h2, h3, h4, .brand-font {
@@ -53,32 +59,49 @@
       font-family: 'JetBrains Mono', monospace;
     }
 
+    /* Glassmorphism 2.0 with Inset Specular Highlights - Optimized for 60FPS */
     .glass-card {
       background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       border: 1px solid var(--card-border);
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
-      border-radius: 0.85rem;
+      box-shadow: 
+        0 10px 30px -5px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.09);
+      border-radius: 0.9rem;
+      transform: translateZ(0);
+      will-change: transform;
     }
 
     .glass-card-hover {
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s, box-shadow 0.25s;
     }
     .glass-card-hover:hover {
-      border-color: rgba(6, 182, 212, 0.45);
-      transform: translateY(-2px);
-      box-shadow: 0 12px 35px 0 rgba(6, 182, 212, 0.18);
+      border-color: var(--card-border-hover);
+      transform: translateY(-2px) translateZ(0);
+      box-shadow: 
+        0 16px 40px -6px rgba(6, 182, 212, 0.22),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+    }
+
+    @media (max-width: 768px) {
+      .glass-card {
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+      }
     }
 
     .glow-cyan {
-      box-shadow: 0 0 20px rgba(6, 182, 212, 0.35);
+      box-shadow: 0 0 24px rgba(6, 182, 212, 0.35);
     }
     .glow-rose {
-      box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+      box-shadow: 0 0 24px rgba(244, 63, 94, 0.4);
     }
     .glow-emerald {
-      box-shadow: 0 0 20px rgba(16, 185, 129, 0.35);
+      box-shadow: 0 0 24px rgba(16, 185, 129, 0.35);
+    }
+    .glow-purple {
+      box-shadow: 0 0 24px rgba(139, 92, 246, 0.35);
     }
 
     #city-map, #trajectory-map, #corridor-map {
@@ -89,13 +112,14 @@
     }
 
     .custom-leaflet-popup .leaflet-popup-content-wrapper {
-      background: #0f172a;
+      background: #070d1e;
       color: #f1f5f9;
       border: 1px solid rgba(6, 182, 212, 0.4);
-      border-radius: 0.5rem;
+      border-radius: 0.6rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
     }
     .custom-leaflet-popup .leaflet-popup-tip {
-      background: #0f172a;
+      background: #070d1e;
     }
 
     .pulse-dot {
@@ -133,7 +157,7 @@
       height: 6px;
     }
     ::-webkit-scrollbar-track {
-      background: #090d16;
+      background: #050a17;
     }
     ::-webkit-scrollbar-thumb {
       background: #1e293b;
@@ -142,30 +166,44 @@
     ::-webkit-scrollbar-thumb:hover {
       background: #06b6d4;
     }
+
+    /* Live Marquee Ticker Keyframes */
+    @keyframes marqueeScroll {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+    .marquee-track {
+      display: inline-block;
+      white-space: nowrap;
+      animation: marqueeScroll 45s linear infinite;
+    }
+    .marquee-track:hover {
+      animation-play-state: paused;
+    }
   </style>
 </head>
-<body class="min-h-screen flex flex-col bg-[#050811] text-slate-100 overflow-x-hidden">
+<body class="min-h-screen flex flex-col bg-[#030712] text-slate-100 overflow-x-hidden selection:bg-cyan-500 selection:text-white">
 
   <!-- TOP APP HEADER -->
-  <header class="glass-card sticky top-0 z-50 rounded-none border-t-0 border-x-0 px-4 sm:px-6 py-3 flex items-center justify-between border-b border-cyan-500/20 bg-slate-950/90 backdrop-blur-xl">
+  <header class="glass-card sticky top-0 z-50 rounded-none border-t-0 border-x-0 px-4 sm:px-6 py-2.5 flex items-center justify-between border-b border-cyan-500/20 bg-slate-950/90 backdrop-blur-xl">
     <div class="flex items-center space-x-3">
       <a href="/" class="flex items-center space-x-2.5 hover:opacity-90 transition">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-md glow-cyan">
-          <i class="fa-solid fa-camera-viewfinder text-lg"></i>
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md glow-cyan ring-1 ring-cyan-400/40">
+          <i class="fa-solid fa-camera-viewfinder text-base"></i>
         </div>
         <div>
           <div class="flex items-center space-x-1.5">
             <span class="brand-font text-lg font-extrabold text-white tracking-wide">UrbanTwin</span>
             <span class="bg-cyan-500/20 text-cyan-400 text-[10px] font-bold px-1.5 py-0.5 rounded border border-cyan-500/30">AI</span>
           </div>
-          <p class="text-[10px] text-gray-400 font-mono hidden xs:block">ANPR Digital Twin Operations</p>
+          <p class="text-[10px] text-gray-400 font-mono hidden xs:block">ANPR Digital Twin Cockpit</p>
         </div>
       </a>
     </div>
 
     <!-- CENTER TAB SWITCHER (DESKTOP) -->
-    <nav class="hidden lg:flex items-center space-x-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
-      <button onclick="switchTab('3dtwin')" id="nav-3dtwin" class="tab-btn px-3 py-1.5 rounded-lg text-white bg-cyan-600/30 border border-cyan-500/40 transition flex items-center space-x-1.5">
+    <nav class="hidden lg:flex items-center space-x-1 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800 text-xs font-semibold shadow-inner">
+      <button onclick="switchTab('3dtwin')" id="nav-3dtwin" class="tab-btn px-3 py-1.5 rounded-lg text-white bg-cyan-600/30 border border-cyan-500/40 transition flex items-center space-x-1.5 shadow-sm">
         <i class="fa-solid fa-cube text-cyan-400"></i>
         <span>3D City Twin</span>
       </button>
@@ -176,7 +214,7 @@
       <button onclick="switchTab('corridor')" id="nav-corridor" class="tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
         <i class="fa-solid fa-truck-medical text-emerald-400"></i>
         <span>Green Corridor</span>
-        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
       </button>
       <button onclick="switchTab('macro')" id="nav-macro" class="tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
         <i class="fa-solid fa-chart-network text-amber-400"></i>
@@ -189,7 +227,7 @@
       <button onclick="switchTab('alerts')" id="nav-alerts" class="tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
         <i class="fa-solid fa-triangle-exclamation text-rose-400"></i>
         <span>Hotlist Alerts</span>
-        <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+        <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
       </button>
       <button onclick="switchTab('simulation')" id="nav-simulation" class="tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
         <i class="fa-solid fa-sliders text-purple-400"></i>
@@ -198,21 +236,51 @@
     </nav>
 
     <!-- RIGHT ACTION & TIME HUD -->
-    <div class="flex items-center space-x-2 sm:space-x-3">
+    <div class="flex items-center space-x-2 sm:space-x-2.5">
+      <!-- Audio Telemetry Synthesizer Toggle -->
+      <button id="audio-toggle-btn" onclick="toggleAudioTelemetry()" class="flex items-center space-x-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 px-2.5 py-1.5 rounded-lg text-xs font-mono transition" title="Toggle Synthesized Audio Telemetry">
+        <i id="audio-toggle-icon" class="fa-solid fa-volume-xmark text-slate-500"></i>
+        <span id="audio-toggle-label" class="hidden xl:inline text-[11px]">Audio: MUTED</span>
+      </button>
+
+      <!-- Fullscreen Toggle -->
+      <button onclick="toggleFullscreen()" class="p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-cyan-300 rounded-lg text-xs transition" title="Toggle Fullscreen Command Mode">
+        <i class="fa-solid fa-expand text-xs"></i>
+      </button>
+
+      <!-- Clock & Node Latency -->
       <div class="hidden sm:flex items-center space-x-2 bg-slate-900 border border-slate-800 px-2.5 py-1.5 rounded-lg font-mono text-xs text-gray-300">
-        <i class="fa-regular fa-clock text-cyan-400"></i>
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
         <span id="live-clock">10:00:00 UTC</span>
       </div>
+
       <a href="/docs" target="_blank" class="flex items-center space-x-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold transition" title="Interactive Swagger UI Explorer">
         <i class="fa-solid fa-code text-cyan-400"></i>
-        <span class="hidden sm:inline">Swagger</span>
+        <span class="hidden md:inline">Swagger</span>
       </a>
       <a href="/redoc" target="_blank" class="flex items-center space-x-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold transition" title="ReDoc Specification">
         <i class="fa-solid fa-book text-purple-400"></i>
-        <span class="hidden sm:inline">ReDoc</span>
+        <span class="hidden md:inline">ReDoc</span>
       </a>
     </div>
   </header>
+
+  <!-- LIVE INCIDENT STREAMING MARQUEE TICKER -->
+  <div class="w-full bg-slate-950/80 border-b border-slate-800/80 px-4 py-1 overflow-hidden flex items-center text-[11px] font-mono shadow-inner">
+    <div class="flex items-center space-x-1.5 text-cyan-400 font-bold uppercase tracking-wider shrink-0 pr-3 border-r border-slate-800 mr-3">
+      <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+      <span>Live Feed:</span>
+    </div>
+    <div class="overflow-hidden whitespace-nowrap flex-1">
+      <div class="marquee-track space-x-8 text-gray-300">
+        <span class="text-emerald-400 font-semibold"><i class="fa-solid fa-truck-medical mr-1"></i>[CORRIDOR] AMB-911 Cardiac Run: Indiranagar &rarr; Victoria Hospital (4 Signals Locked GREEN &bull; 64.5 km/h)</span>
+        <span class="text-rose-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>[WARRANT SIGHTING] Plate 3ABC456 (Toyota Fortuner) Sighted at CAM_03 Koramangala Core &bull; Intercept Window 210s at CAM_05</span>
+        <span class="text-cyan-300"><i class="fa-solid fa-camera mr-1"></i>[ANPR STREAM] 6/6 Edge Cameras Synchronized &bull; Deep OCR Precision Benchmark: 94.6% (>90% Spec)</span>
+        <span class="text-amber-300"><i class="fa-solid fa-chart-line mr-1"></i>[TRAFFIC DYNAMICS] Indiranagar 100ft Sector Inflow: 1,445 trips/hr &bull; LOS B Free Flow Active</span>
+        <span class="text-purple-300"><i class="fa-solid fa-brain mr-1"></i>[RADAR] Behavioral Pattern-of-Life: 1 Tactical Convoy Tracked on Intermediate Ring Road</span>
+      </div>
+    </div>
+  </div>
 
   <!-- MOBILE & TABLET RESPONSIVE TAB BAR (Always accessible on screens < 1024px) -->
   <div class="lg:hidden px-3 sm:px-6 pt-3 pb-1 w-full max-w-7xl mx-auto overflow-x-auto no-scrollbar scroll-smooth">
@@ -249,55 +317,63 @@
   </div>
 
   <!-- TOP KPI METRIC RIBBON -->
-  <div class="px-6 pt-5 max-w-7xl w-full mx-auto">
+  <div class="px-6 pt-4 max-w-7xl w-full mx-auto">
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-      <div class="glass-card p-3 flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-lg">
+      <div class="glass-card glass-card-hover p-3.5 flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-lg shadow-sm">
           <i class="fa-solid fa-video"></i>
         </div>
         <div>
-          <div class="text-[10px] text-gray-400 uppercase font-semibold">Edge Cameras</div>
-          <div class="text-xl font-extrabold text-white brand-font" id="kpi-cameras">6 / 6 <span class="text-xs text-emerald-400 font-normal">Active</span></div>
+          <div class="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Edge Cameras</div>
+          <div class="text-xl font-extrabold text-white brand-font flex items-center space-x-1.5" id="kpi-cameras">
+            <span>6 / 6</span>
+            <span class="text-xs text-emerald-400 font-normal"><i class="fa-solid fa-check"></i> Active</span>
+          </div>
+          <div class="text-[9px] text-gray-500 font-mono mt-0.5">Cluster Synchronization: 100%</div>
         </div>
       </div>
 
-      <div class="glass-card p-3 flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-lg">
+      <div class="glass-card glass-card-hover p-3.5 flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-lg shadow-sm">
           <i class="fa-solid fa-id-card"></i>
         </div>
         <div>
-          <div class="text-[10px] text-gray-400 uppercase font-semibold">Deep OCR Benchmark</div>
+          <div class="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Deep OCR Benchmark</div>
           <div class="text-xl font-extrabold text-emerald-400 brand-font" id="kpi-ocr">94.6% <span class="text-xs text-gray-400 font-normal">(>90%)</span></div>
+          <div class="text-[9px] text-emerald-400/80 font-mono mt-0.5">STN Rectification Verified</div>
         </div>
       </div>
 
-      <div class="glass-card p-3 flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 text-lg">
+      <div class="glass-card glass-card-hover p-3.5 flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 text-lg shadow-sm">
           <i class="fa-solid fa-car-side"></i>
         </div>
         <div>
-          <div class="text-[10px] text-gray-400 uppercase font-semibold">Plates Scanned Today</div>
-          <div class="text-xl font-extrabold text-white brand-font" id="kpi-plates">18,450</div>
+          <div class="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Plates Scanned Today</div>
+          <div class="text-xl font-extrabold text-white brand-font text-cyan-300" id="kpi-plates">18,450</div>
+          <div class="text-[9px] text-cyan-400 font-mono mt-0.5">+4.2% Commuter Surge</div>
         </div>
       </div>
 
-      <div class="glass-card p-3 flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-lg">
+      <div class="glass-card glass-card-hover p-3.5 flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-lg shadow-sm">
           <i class="fa-solid fa-gauge-high"></i>
         </div>
         <div>
-          <div class="text-[10px] text-gray-400 uppercase font-semibold">Avg City Speed</div>
+          <div class="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Avg City Speed</div>
           <div class="text-xl font-extrabold text-amber-400 brand-font" id="kpi-speed">45.0 km/h</div>
+          <div class="text-[9px] text-amber-400/80 font-mono mt-0.5">Level of Service: LOS B</div>
         </div>
       </div>
 
-      <div class="glass-card p-3 flex items-center space-x-3 border-rose-500/40 col-span-2 sm:col-span-1 bg-gradient-to-r from-slate-900 to-rose-950/20">
-        <div class="w-10 h-10 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 text-lg animate-pulse">
+      <div class="glass-card glass-card-hover p-3.5 flex items-center space-x-3 border-rose-500/40 col-span-2 sm:col-span-1 bg-gradient-to-r from-slate-900 to-rose-950/20">
+        <div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 text-lg animate-pulse shadow-sm">
           <i class="fa-solid fa-triangle-exclamation"></i>
         </div>
         <div>
-          <div class="text-[10px] text-gray-400 uppercase font-semibold">Hotlist Intercepts</div>
+          <div class="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Hotlist Intercepts</div>
           <div class="text-xl font-extrabold text-rose-400 brand-font" id="kpi-alerts">2 Sighted</div>
+          <div class="text-[9px] text-rose-300 font-mono mt-0.5">Downstream Unit Dispatched</div>
         </div>
       </div>
     </div>
