@@ -752,7 +752,7 @@
         <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
         <span>Urban Sector Skyscraper</span>
       </div>
-      <div class="text-gray-400 text-[10px]">Height: ${h}m &bull; Monitored Grid</div>
+      <div class="text-gray-400 text-[10px]">Height: ${h}m • Monitored Grid</div>
     `;
   }
 

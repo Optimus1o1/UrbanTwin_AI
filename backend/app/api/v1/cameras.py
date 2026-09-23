@@ -1,6 +1,9 @@
-from typing import List, Dict, Any
-from fastapi import APIRouter, HTTPException, Request
-from app.models.schemas import Camera, OCRTestRequest, OCRTestResponse
+import base64
+from typing import List, Dict, Any, Optional
+from fastapi import APIRouter, HTTPException, Request, UploadFile, File
+from app.models.schemas import (
+    Camera, OCRTestRequest, OCRTestResponse, OCRUploadResponse, OCRBase64UploadRequest
+)
 from app.services import camera_service, detection_service, anpr_service
 from app.core.rate_limiter import limiter
 
@@ -60,3 +63,42 @@ def test_ocr_performance(request: Request, req: OCRTestRequest):
     Verifies that system maintains >90% precision.
     """
     return anpr_service.test_ocr_degradation_pipeline(req)
+
+@router.post("/ocr_upload", response_model=OCRUploadResponse)
+@limiter.limit("60/minute")
+def upload_plate_image(request: Request, file: UploadFile = File(...)):
+    """
+    Deep-Learning ANPR OCR Upload Endpoint:
+    Accepts real vehicle or plate images (JPEG/PNG/WEBP/BMP), executes multi-stage
+    plate localization, homography/CLAHE enhancement, CRAFT/EasyOCR deep inference,
+    and returns full plate character confidences + vector SVG.
+    """
+    if not file:
+        raise HTTPException(status_code=400, detail="No image file provided")
+
+    contents = file.file.read()
+    if not contents or len(contents) == 0:
+        raise HTTPException(status_code=400, detail="Uploaded image file is empty")
+
+    return anpr_service.process_uploaded_plate_image(contents, filename=file.filename or "upload.jpg")
+
+@router.post("/ocr_image_base64", response_model=OCRUploadResponse)
+@limiter.limit("60/minute")
+def upload_plate_image_base64(request: Request, req: OCRBase64UploadRequest):
+    """
+    Deep-Learning ANPR OCR Base64 Upload Endpoint:
+    Accepts base64 encoded image string for JSON-only API clients.
+    """
+    b64_str = req.image_base64.strip()
+    if not b64_str:
+        raise HTTPException(status_code=400, detail="Base64 image content is required")
+
+    if "," in b64_str:
+        b64_str = b64_str.split(",", 1)[1]
+
+    try:
+        raw_bytes = base64.b64decode(b64_str)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid base64 payload: {e}")
+
+    return anpr_service.process_uploaded_plate_image(raw_bytes, filename=req.filename or "upload.jpg")

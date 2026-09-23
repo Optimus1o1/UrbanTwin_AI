@@ -80,6 +80,24 @@ window.switchTab = function (tabId) {
     } catch (_) {}
   }
 
+  // Synchronize Mobile Bottom Navigation Bar
+  document.querySelectorAll('.bottom-nav-btn').forEach(btn => {
+    btn.classList.remove('text-cyan-400', 'bg-cyan-500/15', 'border-cyan-500/40');
+    btn.classList.add('text-slate-400');
+    const dot = btn.querySelector('.active-dot');
+    if (dot) dot.classList.add('hidden');
+  });
+  const activeBottomBtn = document.getElementById(`bottom-nav-${tabId}`);
+  if (activeBottomBtn) {
+    activeBottomBtn.classList.remove('text-slate-400');
+    activeBottomBtn.classList.add('text-cyan-400', 'bg-cyan-500/15', 'border-cyan-500/40');
+    const dot = activeBottomBtn.querySelector('.active-dot');
+    if (dot) dot.classList.remove('hidden');
+    try {
+      activeBottomBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    } catch (_) {}
+  }
+
   // Performance Optimization: Pause inactive 3D & canvas animation loops
   if (tabId === '3dtwin') {
     if (window.resumeDigitalTwin3D) window.resumeDigitalTwin3D();
@@ -130,6 +148,31 @@ window.switchTab = function (tabId) {
         window.runSimulation();
       }
     }, 80);
+  }
+};
+
+// Window resize listener for responsive Leaflet maps & 3D WebGL
+window.addEventListener('resize', () => {
+  if (cityMap) cityMap.invalidateSize();
+  if (trajectoryMap) trajectoryMap.invalidateSize();
+  if (corridorMap) corridorMap.invalidateSize();
+});
+
+// Mobile Telemetry KPI Drawer Toggle
+window.toggleMobileKPIs = function () {
+  const kpiContainer = document.getElementById('kpi-ribbon-grid');
+  const toggleIcon = document.getElementById('kpi-toggle-icon');
+  const toggleText = document.getElementById('kpi-toggle-text');
+  if (!kpiContainer) return;
+  const isHidden = kpiContainer.classList.contains('hidden');
+  if (isHidden) {
+    kpiContainer.classList.remove('hidden');
+    if (toggleIcon) toggleIcon.className = 'fa-solid fa-chevron-up text-cyan-400 text-xs transition-transform';
+    if (toggleText) toggleText.innerText = 'Hide Telemetry Summary';
+  } else {
+    kpiContainer.classList.add('hidden');
+    if (toggleIcon) toggleIcon.className = 'fa-solid fa-chevron-down text-cyan-400 text-xs transition-transform';
+    if (toggleText) toggleText.innerText = 'Show Telemetry Summary';
   }
 };
 
@@ -288,8 +331,8 @@ function renderTrajectory(traj) {
 
   // Update banner
   document.getElementById('traj-plate-display').innerText = traj.plate_text;
-  document.getElementById('traj-vehicle-desc').innerText = `${traj.vehicle_class} &bull; ${traj.vehicle_color}`;
-  document.getElementById('traj-time-window').innerText = `First Sighted: ${traj.first_seen} &bull; Last Seen: ${traj.last_seen}`;
+  document.getElementById('traj-vehicle-desc').innerText = `${traj.vehicle_class} • ${traj.vehicle_color}`;
+  document.getElementById('traj-time-window').innerText = `First Sighted: ${traj.first_seen} • Last Seen: ${traj.last_seen}`;
   document.getElementById('traj-checkpoints-count').innerText = `${traj.total_waypoints} Nodes`;
   document.getElementById('traj-distance').innerText = `${traj.total_distance_km} km`;
   document.getElementById('traj-avg-speed').innerText = `${traj.avg_speed_kmh} km/h`;
@@ -684,7 +727,7 @@ function updateSimulatedMacroDynamics(hour) {
         <div class="p-2.5 bg-slate-900 rounded-lg border border-slate-800 flex items-center justify-between text-xs">
           <div>
             <div class="text-white font-bold">${d.camera_id}: ${d.camera_name.split('-')[0]}</div>
-            <div class="text-[10px] text-gray-400 font-mono">${flow} vph &bull; ${Math.round(effCongestion * 85)}% occ</div>
+            <div class="text-[10px] text-gray-400 font-mono">${flow} vph • ${Math.round(effCongestion * 85)}% occ</div>
           </div>
           <div class="text-right">
             <span class="px-2 py-0.5 rounded text-[10px] font-bold ${speed < 30 ? 'bg-rose-950 text-rose-400 border border-rose-500/30' : (speed < 45 ? 'bg-amber-950 text-amber-400 border border-amber-500/30' : 'bg-emerald-950 text-emerald-400 border border-emerald-500/30')}">${los.split(' ')[0]}</span>
@@ -763,7 +806,7 @@ window.highlightODCorridor = function (originName, destName) {
       toast.className = 'fixed top-20 right-8 z-50 p-3 bg-slate-950/95 border border-cyan-400 rounded-xl text-xs shadow-2xl text-cyan-300 font-mono flex items-center space-x-2 animate-fade-in';
       document.body.appendChild(toast);
     }
-    toast.innerHTML = `<i class="fa-solid fa-arrows-split-up-and-left text-cyan-400"></i><span>Active Corridor: ${originName} &bull; ${destName}</span>`;
+    toast.innerHTML = `<i class="fa-solid fa-arrows-split-up-and-left text-cyan-400"></i><span>Active Corridor: ${originName} • ${destName}</span>`;
     setTimeout(() => { toast.remove(); }, 3500);
   }
 };
@@ -986,7 +1029,7 @@ function renderRadarThreatCards() {
         <div class="flex flex-wrap items-baseline justify-between gap-2">
           <div class="flex items-center space-x-2">
             <span class="font-mono text-base font-bold text-white bg-slate-900 px-2.5 py-0.5 rounded border border-slate-700">${t.primary_plate}</span>
-            ${t.secondary_plate ? `<span class="text-xs text-gray-400">&bull; Coupled With:</span><span class="font-mono text-xs font-bold text-amber-300 bg-amber-950/50 px-2 py-0.5 rounded border border-amber-500/40">${t.secondary_plate}</span>` : ''}
+            ${t.secondary_plate ? `<span class="text-xs text-gray-400">• Coupled With:</span><span class="font-mono text-xs font-bold text-amber-300 bg-amber-950/50 px-2 py-0.5 rounded border border-amber-500/40">${t.secondary_plate}</span>` : ''}
           </div>
           <span class="text-xs text-gray-300 font-medium">${t.primary_vehicle_desc}</span>
         </div>
@@ -1575,7 +1618,7 @@ function renderSignalControllersRack(c) {
                 <span>${j.junction_name}</span>
                 ${j.manual_override ? '<span class="px-1.5 py-0.2 bg-purple-950 text-purple-300 text-[9px] rounded border border-purple-500/40">OVERRIDE</span>' : ''}
               </div>
-              <div class="text-[10px] text-gray-400 font-mono">${j.junction_id} &bull; ${distM}m downstream</div>
+              <div class="text-[10px] text-gray-400 font-mono">${j.junction_id} • ${distM}m downstream</div>
             </div>
           </div>
           <div>${stateBadge}</div>
@@ -1975,8 +2018,13 @@ function showCorridorToast(msg) {
 window.setOCRPreset = function (plate, degradation) {
   const plateInput = document.getElementById('ocr-plate-input');
   const degSelect = document.getElementById('ocr-degradation-select');
+  const extractedTextEl = document.getElementById('ocr-extracted-text');
+  const previewBox = document.getElementById('ocr-image-preview-box');
   if (plateInput) plateInput.value = plate;
   if (degSelect && degradation) degSelect.value = degradation;
+  if (previewBox && extractedTextEl && (extractedTextEl.innerText.includes('Error') || extractedTextEl.innerText === '--')) {
+    previewBox.classList.add('hidden');
+  }
   runOCRTest();
 };
 
@@ -2073,46 +2121,208 @@ window.runOCRTest = async function () {
 };
 
 // Edge Frame & Custom Upload Handlers
-window.handleOCRImageUpload = function (event) {
+window.currentUploadedFile = null;
+
+window.handleOCRDrop = function (event) {
+  event.preventDefault();
+  const zone = document.getElementById('ocr-upload-zone');
+  if (zone) zone.classList.remove('border-cyan-500', 'bg-cyan-950/20');
+
+  if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+    const file = event.dataTransfer.files[0];
+    const fileInput = document.getElementById('ocr-image-file');
+    if (fileInput) {
+      try {
+        fileInput.files = event.dataTransfer.files;
+      } catch (err) {
+        // Fallback for browsers that don't allow modifying files list
+      }
+    }
+    window.handleOCRImageUpload({ target: { files: [file] } });
+  }
+};
+
+window.rescanUploadedImage = function () {
+  if (window.currentUploadedFile) {
+    window.handleOCRImageUpload({ target: { files: [window.currentUploadedFile] } });
+  } else {
+    const fileInput = document.getElementById('ocr-image-file');
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+      window.handleOCRImageUpload({ target: fileInput });
+    } else {
+      if (fileInput) fileInput.click();
+    }
+  }
+};
+
+window.handleOCRImageUpload = async function (event) {
   const file = event.target.files && event.target.files[0];
   if (!file) return;
 
+  window.currentUploadedFile = file;
+
+  const previewBox = document.getElementById('ocr-image-preview-box');
+  const previewImg = document.getElementById('ocr-uploaded-preview');
+  const extractedTextEl = document.getElementById('ocr-extracted-text');
+  const extractedBadge = document.getElementById('ocr-extracted-badge');
+  const plateInput = document.getElementById('ocr-plate-input');
+  const btn = document.getElementById('ocr-run-btn');
+  const svgContainer = document.getElementById('ocr-svg-container');
+  const badge = document.getElementById('ocr-accuracy-badge');
+  const rectType = document.getElementById('ocr-rect-type');
+  const latency = document.getElementById('ocr-latency');
+  const charBreakdown = document.getElementById('ocr-char-breakdown');
+  const kpiOcr = document.getElementById('kpi-ocr');
+
+  // 1. Show immediate preview
+  if (previewBox) previewBox.classList.remove('hidden');
   const reader = new FileReader();
   reader.onload = function (e) {
-    const dataUrl = e.target.result;
-    const previewBox = document.getElementById('ocr-image-preview-box');
-    const previewImg = document.getElementById('ocr-uploaded-preview');
-    const extractedTextEl = document.getElementById('ocr-extracted-text');
-    const plateInput = document.getElementById('ocr-plate-input');
-
-    if (previewBox) previewBox.classList.remove('hidden');
-    if (previewImg) previewImg.src = dataUrl;
-
-    // Simulate character extraction or infer from filename/clean string
-    let simulatedPlate = file.name.replace(/\.[^/.]+$/, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-    if (!simulatedPlate || simulatedPlate.length < 4) {
-      simulatedPlate = 'KA03HA2291';
-    }
-    simulatedPlate = simulatedPlate.slice(0, 10);
-
-    if (extractedTextEl) extractedTextEl.innerText = simulatedPlate;
-    if (plateInput) plateInput.value = simulatedPlate;
-
-    // Run OCR degradation benchmark on extracted plate
-    runOCRTest();
+    if (previewImg) previewImg.src = e.target.result;
   };
   reader.readAsDataURL(file);
+
+  // 2. Set interactive loading states
+  if (extractedTextEl) {
+    extractedTextEl.innerHTML = `<span class="inline-flex items-center text-cyan-400 font-mono text-xs"><i class="fa-solid fa-spinner fa-spin mr-1.5"></i>Running Deep Neural ANPR...</span>`;
+  }
+  if (extractedBadge) {
+    extractedBadge.innerText = 'Scanning...';
+    extractedBadge.className = 'text-[10px] text-cyan-400 font-bold bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-500/40 animate-pulse';
+  }
+  if (btn) {
+    btn.disabled = true;
+    btn.classList.add('opacity-75');
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i><span>Scanning Number Plate...</span>`;
+  }
+  if (svgContainer) {
+    svgContainer.innerHTML = `<div class="py-6 text-center text-xs font-mono text-cyan-400 animate-pulse"><i class="fa-solid fa-microchip text-lg mb-2 block"></i>Extracting Plate Contours & Homography...</div>`;
+  }
+
+  // 3. Post actual image bytes to deep-learning ANPR OCR backend
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await fetch('/api/v1/cameras/ocr_upload', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const testRes = data.ocr_test_result || data;
+      const recognized = (data.recognized_plate || testRes.recognized_plate || '').trim();
+      const conf = data.recognition_confidence || (testRes.raw_confidence || 0.92);
+      const engine = data.recognition_engine || testRes.rectification_applied || 'EasyOCR Deep Reader';
+
+      // Update extracted plate text display
+      if (recognized && recognized !== 'NO_PLATE_DETECTED' && recognized !== 'ERR_INVALID') {
+        if (extractedTextEl) {
+          extractedTextEl.innerHTML = `<span>${recognized}</span>`;
+        }
+        if (extractedBadge) {
+          extractedBadge.innerText = `${(conf * 100).toFixed(1)}% Conf`;
+          extractedBadge.className = 'text-[10px] text-emerald-400 font-bold bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/40';
+        }
+        if (plateInput) plateInput.value = recognized;
+      } else {
+        if (extractedTextEl) {
+          extractedTextEl.innerHTML = `<span class="text-amber-400 text-xs font-mono"><i class="fa-solid fa-triangle-exclamation mr-1"></i>No Plate Recognized</span>`;
+        }
+        if (extractedBadge) {
+          extractedBadge.innerText = 'Check Image';
+          extractedBadge.className = 'text-[10px] text-amber-400 font-bold bg-amber-950 px-2 py-0.5 rounded border border-amber-500/40';
+        }
+      }
+
+      // 1. Render SVG Plate Crop
+      if (svgContainer && testRes.ocr_visual_svg) {
+        svgContainer.innerHTML = testRes.ocr_visual_svg;
+      }
+
+      // 2. Accuracy Badge
+      if (badge && testRes.overall_accuracy_pct !== undefined) {
+        badge.innerText = `${testRes.overall_accuracy_pct.toFixed(1)}% Accuracy (${testRes.passes_90_pct_threshold ? 'PASS' : 'FLAGGED'})`;
+        badge.className = testRes.passes_90_pct_threshold
+          ? 'px-2.5 py-0.5 bg-emerald-950 text-emerald-400 font-bold rounded border border-emerald-500/40 text-xs flex items-center space-x-1'
+          : 'px-2.5 py-0.5 bg-amber-950 text-amber-400 font-bold rounded border border-amber-500/40 text-xs flex items-center space-x-1';
+      }
+
+      // 3. Preprocessing and Latency
+      if (rectType) rectType.innerText = testRes.rectification_applied || engine;
+      if (latency) latency.innerText = `${(testRes.processing_time_ms || 24.5).toFixed(1)} ms`;
+
+      // 4. Character Breakdown Cards
+      if (charBreakdown && testRes.character_breakdown && testRes.character_breakdown.length > 0) {
+        charBreakdown.innerHTML = testRes.character_breakdown.map((item) => {
+          const pct = (item.confidence * 100).toFixed(1);
+          const isHigh = item.confidence >= 0.90;
+          const borderColor = isHigh ? 'border-emerald-500/40 bg-emerald-950/40' : 'border-amber-500/40 bg-amber-950/40';
+          const textColor = isHigh ? 'text-emerald-400' : 'text-amber-400';
+          const statusBg = isHigh ? 'text-emerald-400 bg-emerald-950/80 border-emerald-500/30' : 'text-amber-400 bg-amber-950/80 border-amber-500/30';
+          return `
+            <div class="p-2 rounded-lg border ${borderColor} flex flex-col items-center justify-between min-w-[42px] transition hover:scale-105">
+              <span class="text-base font-extrabold text-white font-mono">${item.char}</span>
+              <span class="text-[10px] font-bold ${textColor} mt-1">${pct}%</span>
+              <span class="text-[8px] uppercase tracking-wider px-1 py-0.2 rounded border mt-1 font-semibold ${statusBg}">${item.status || (isHigh ? 'PASS' : 'RECT')}</span>
+            </div>
+          `;
+        }).join('');
+      } else if (charBreakdown && (recognized === 'NO_PLATE_DETECTED' || recognized === 'ERR_INVALID')) {
+        charBreakdown.innerHTML = `<div class="col-span-full py-2 text-center text-xs text-amber-400/80 font-mono">No characters identified in uploaded image</div>`;
+      }
+
+      // 5. Update Top Ribbon KPI
+      if (kpiOcr && testRes.overall_accuracy_pct) {
+        kpiOcr.innerHTML = `${testRes.overall_accuracy_pct.toFixed(1)}% <span class="text-xs text-gray-400 font-normal">(>90% Spec)</span>`;
+      }
+
+      if (window.playAudioCue) window.playAudioCue('success');
+    } else {
+      console.warn("OCR test upload returned status:", res.status);
+      if (extractedTextEl) extractedTextEl.innerHTML = `<span class="text-rose-400 text-xs font-mono"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Server returned ${res.status}</span>`;
+      if (extractedBadge) {
+        extractedBadge.innerText = 'Failed';
+        extractedBadge.className = 'text-[10px] text-rose-400 font-bold bg-rose-950 px-2 py-0.5 rounded border border-rose-500/40';
+      }
+      if (svgContainer) {
+        svgContainer.innerHTML = `<div class="p-3 text-center text-xs text-rose-400 font-mono"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Server returned status ${res.status}</div>`;
+      }
+    }
+  } catch (err) {
+    console.error("Failed uploading image for OCR:", err);
+    if (extractedTextEl) extractedTextEl.innerHTML = `<span class="text-rose-400 text-xs font-mono"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Network Error</span>`;
+    if (extractedBadge) {
+      extractedBadge.innerText = 'Failed';
+      extractedBadge.className = 'text-[10px] text-rose-400 font-bold bg-rose-950 px-2 py-0.5 rounded border border-rose-500/40';
+    }
+    if (svgContainer) {
+      svgContainer.innerHTML = `<div class="p-3 text-center text-xs text-rose-400 font-mono"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Network Error connecting to OCR Engine</div>`;
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.remove('opacity-75');
+      btn.innerHTML = `<i class="fa-solid fa-microchip"></i><span>Run Deep OCR Inference</span>`;
+    }
+  }
 };
 
 window.loadSamplePlateCrop = function (plate, degradation) {
   const previewBox = document.getElementById('ocr-image-preview-box');
   const previewImg = document.getElementById('ocr-uploaded-preview');
   const extractedTextEl = document.getElementById('ocr-extracted-text');
+  const extractedBadge = document.getElementById('ocr-extracted-badge');
   const plateInput = document.getElementById('ocr-plate-input');
   const degSelect = document.getElementById('ocr-degradation-select');
 
   if (previewBox) previewBox.classList.remove('hidden');
   if (extractedTextEl) extractedTextEl.innerText = plate;
+  if (extractedBadge) {
+    extractedBadge.innerText = 'Sample Crop';
+    extractedBadge.className = 'text-[10px] text-cyan-400 font-bold bg-cyan-950 px-2 py-0.5 rounded border border-cyan-500/40';
+  }
   if (plateInput) plateInput.value = plate;
   if (degSelect) degSelect.value = degradation;
 

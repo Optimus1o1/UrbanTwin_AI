@@ -1448,7 +1448,7 @@
           <i class="fa-solid fa-xmark text-sm"></i>
         </button>
       </div>
-      <p class="font-bold ${isHot ? 'text-rose-400' : 'text-cyan-300'} text-sm mb-0.5">${v.data.model} &bull; ${isHot ? 'HOTLIST WANTED' : 'Cruising Entity'}</p>
+      <p class="font-bold ${isHot ? 'text-rose-400' : 'text-cyan-300'} text-sm mb-0.5">${v.data.model} • ${isHot ? 'HOTLIST WANTED' : 'Cruising Entity'}</p>
       <p class="text-gray-400 text-[11px] mb-3">Live Tracking: <span class="text-emerald-400 font-semibold">Optical Lock Active</span></p>
       <div class="grid grid-cols-2 gap-2 text-center mb-3">
         <div class="bg-slate-900/90 p-2 rounded-lg border border-slate-800">

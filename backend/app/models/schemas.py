@@ -100,6 +100,10 @@ class OCRUploadResponse(BaseModel):
     all_detected_texts: List[str] = []
     ocr_test_result: OCRTestResponse
 
+class OCRBase64UploadRequest(BaseModel):
+    image_base64: str
+    filename: Optional[str] = "upload.jpg"
+
 # --- Spatial-Temporal Trajectory Tracking Schemas ---
 class TrajectoryWaypoint(BaseModel):
     step: int

@@ -1,0 +1,2204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0">
+<title>UrbanTwin AI — Detailed Project Proposal & Technical Blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #1E293B;
+    background: #E2E8F0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .page {
+    width: 210mm;
+    height: 297mm;
+    max-height: 297mm;
+    min-height: 297mm;
+    padding: 13mm 15mm 13mm 15mm;
+    margin: 0 auto;
+    background: #FFFFFF;
+    position: relative;
+    page-break-after: always;
+    break-after: page;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+  }
+
+  /* Running Header & Footer */
+  .page-header {
+    height: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #E2E8F0;
+    padding-bottom: 4px;
+    margin-bottom: 8px;
+    font-size: 7.5pt;
+    font-weight: 600;
+    color: #64748B;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .page-header .brand {
+    color: #0F172A;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .page-header .brand span {
+    color: #2563EB;
+  }
+
+  .page-footer {
+    height: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #E2E8F0;
+    padding-top: 4px;
+    margin-top: 8px;
+    font-size: 7.5pt;
+    color: #64748B;
+  }
+  .page-footer .page-num {
+    font-weight: 700;
+    color: #0F172A;
+  }
+
+  .page-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 5px;
+  }
+
+  /* Typography */
+  h1, h2, h3, h4 {
+    font-family: 'Space Grotesk', sans-serif;
+    color: #0F172A;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+  h2.section-title {
+    font-size: 13pt;
+    font-weight: 700;
+    color: #0F172A;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border-bottom: 2px solid #2563EB;
+    padding-bottom: 3px;
+    margin-bottom: 4px;
+  }
+  h2.section-title .sec-num {
+    background: #2563EB;
+    color: #FFFFFF;
+    font-size: 8pt;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+  }
+  h3.subsection-title {
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: #1E293B;
+    margin-top: 2px;
+    margin-bottom: 2px;
+  }
+
+  p {
+    font-size: 7.5pt;
+    line-height: 1.38;
+    color: #334155;
+  }
+  p.lead {
+    font-size: 8pt;
+    line-height: 1.38;
+    color: #1E293B;
+    font-weight: 500;
+  }
+
+  /* Components */
+  .badge {
+    display: inline-block;
+    font-size: 6.8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .badge-blue { background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; }
+  .badge-green { background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; }
+  .badge-amber { background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A; }
+  .badge-purple { background: #FAF5FF; color: #6D28D9; border: 1px solid #E9D5FF; }
+  .badge-slate { background: #F1F5F9; color: #334155; border: 1px solid #CBD5E1; }
+
+  .card {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 6px;
+    padding: 5px 8px;
+  }
+  .card-bordered {
+    border-left: 3px solid #2563EB;
+  }
+  .card-highlight {
+    background: #F0FDF4;
+    border: 1px solid #BBF7D0;
+    border-left: 3px solid #10B981;
+  }
+  .card-alert {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-left: 3px solid #EF4444;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+  }
+  .grid-4 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 6px;
+  }
+
+  /* Tables */
+  table.doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 7.2pt;
+    margin: 2px 0;
+  }
+  table.doc-table th {
+    background: #0F172A;
+    color: #F8FAFC;
+    text-align: left;
+    padding: 4px 6px;
+    font-weight: 600;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 0.02em;
+    font-size: 7pt;
+  }
+  table.doc-table td {
+    padding: 3.5px 6px;
+    border-bottom: 1px solid #E2E8F0;
+    color: #334155;
+    vertical-align: top;
+  }
+  table.doc-table tr:nth-child(even) td {
+    background: #F8FAFC;
+  }
+  table.doc-table td.code {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    color: #0F172A;
+    font-size: 6.8pt;
+  }
+
+  .code-block {
+    background: #0F172A;
+    color: #E2E8F0;
+    border-radius: 5px;
+    padding: 6px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 6.8pt;
+    line-height: 1.35;
+    overflow: hidden;
+  }
+  .code-block .kwd { color: #38BDF8; font-weight: 600; }
+  .code-block .str { color: #4ADE80; }
+  .code-block .num { color: #FBBF24; }
+  .code-block .cmt { color: #64748B; font-style: italic; }
+
+  ul.bullet-list {
+    list-style: none;
+    padding-left: 0;
+  }
+  ul.bullet-list li {
+    font-size: 7.8pt;
+    line-height: 1.4;
+    color: #334155;
+    position: relative;
+    padding-left: 14px;
+    margin-bottom: 3px;
+  }
+  ul.bullet-list li::before {
+    content: "•";
+    position: absolute;
+    left: 4px;
+    color: #2563EB;
+    font-weight: bold;
+    font-size: 9pt;
+  }
+
+  .math-box {
+    background: #F1F5F9;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7.2pt;
+    color: #0F172A;
+    border: 1px dashed #CBD5E1;
+    margin: 2px 0;
+    text-align: center;
+  }
+
+  /* Cover Page Styles */
+  .cover-page {
+    background: #0B0F19;
+    color: #F8FAFC;
+    padding: 18mm 18mm 16mm 18mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover-page::before {
+    content: "";
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(37,99,235,0.2) 0%, rgba(11,15,25,0) 70%);
+    pointer-events: none;
+  }
+  .cover-page::after {
+    content: "";
+    position: absolute;
+    bottom: -80px;
+    left: -80px;
+    width: 450px;
+    height: 450px;
+    background: radial-gradient(circle, rgba(224,164,92,0.12) 0%, rgba(11,15,25,0) 70%);
+    pointer-events: none;
+  }
+  .cover-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+    padding-bottom: 12px;
+    z-index: 1;
+  }
+  .cover-brand {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14pt;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .cover-brand span.slogan {
+    font-size: 8pt;
+    font-weight: 500;
+    color: #E0A45C;
+    letter-spacing: 0.05em;
+  }
+  .cover-hero {
+    margin: auto 0;
+    z-index: 1;
+  }
+  .cover-tag {
+    display: inline-block;
+    background: rgba(37, 99, 235, 0.2);
+    border: 1px solid #3B82F6;
+    color: #60A5FA;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 3px 10px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .cover-title {
+    font-size: 34pt;
+    font-weight: 800;
+    line-height: 1.05;
+    color: #FFFFFF;
+    margin-bottom: 10px;
+    letter-spacing: -0.03em;
+  }
+  .cover-title span {
+    background: linear-gradient(135deg, #60A5FA 0%, #38BDF8 50%, #E0A45C 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .cover-subtitle {
+    font-size: 13pt;
+    font-weight: 500;
+    color: #94A3B8;
+    line-height: 1.35;
+    margin-bottom: 12px;
+    max-width: 90%;
+  }
+  .cover-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .cover-pill {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #E2E8F0;
+    font-size: 7.5pt;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  .cover-meta-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    gap: 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    padding: 12px 14px;
+    z-index: 1;
+  }
+  .cover-meta-item .lbl {
+    font-size: 6.8pt;
+    text-transform: uppercase;
+    color: #64748B;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .cover-meta-item .val {
+    font-size: 8.5pt;
+    color: #F8FAFC;
+    font-weight: 600;
+  }
+  .cover-meta-item .sub {
+    font-size: 7pt;
+    color: #94A3B8;
+  }
+  .cover-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255,255,255,0.12);
+    padding-top: 10px;
+    font-size: 7pt;
+    color: #64748B;
+    z-index: 1;
+  }
+  /* PDF Controls Toolbar */
+  .pdf-control-toolbar {
+    position: sticky;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 99999;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  }
+  .pdf-control-toolbar .brand-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .pdf-control-toolbar .brand-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11pt;
+    font-weight: 700;
+    color: #F8FAFC;
+    letter-spacing: -0.01em;
+  }
+  .pdf-control-toolbar .badge-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7pt;
+    font-weight: 600;
+    background: rgba(37, 99, 235, 0.25);
+    color: #93C5FD;
+    border: 1px solid rgba(59, 130, 246, 0.4);
+    padding: 2px 8px;
+    border-radius: 9999px;
+  }
+  .pdf-control-toolbar .actions-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .btn-pdf {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 8pt;
+    font-weight: 600;
+    padding: 7px 13px;
+    border-radius: 6px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+  }
+  .btn-pdf-download {
+    background: linear-gradient(135deg, #2563EB, #1D4ED8);
+    color: #FFFFFF !important;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+  }
+  .btn-pdf-download:hover {
+    background: linear-gradient(135deg, #3B82F6, #2563EB);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.6);
+    transform: translateY(-1px);
+  }
+  .btn-pdf-action {
+    background: rgba(255, 255, 255, 0.08);
+    color: #E2E8F0 !important;
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+  .btn-pdf-action:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: #FFFFFF !important;
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+  .btn-pdf-toggle {
+    background: rgba(224, 164, 92, 0.15);
+    color: #F6D5A8 !important;
+    border-color: rgba(224, 164, 92, 0.4);
+  }
+  .btn-pdf-toggle:hover {
+    background: rgba(224, 164, 92, 0.25);
+    color: #FFFFFF !important;
+    border-color: rgba(224, 164, 92, 0.7);
+  }
+  #pdf-viewer-container {
+    display: none;
+    width: 100%;
+    height: calc(100vh - 54px);
+    background: #0B0F19;
+  }
+  #pdf-viewer-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+  @media screen and (max-width: 820px) {
+    body {
+      padding: 0;
+      background: #0B0F19;
+    }
+    .pdf-control-toolbar {
+      position: sticky;
+      top: 0;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+      padding: 12px 14px;
+      padding-top: calc(12px + env(safe-area-inset-top, 0px));
+    }
+    .pdf-control-toolbar .brand-group {
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .pdf-control-toolbar .actions-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      width: 100%;
+    }
+    .btn-pdf {
+      justify-content: center;
+      padding: 8px 10px;
+      font-size: 8pt;
+      min-height: 40px;
+      text-align: center;
+    }
+    #proposal-pages-container {
+      padding: 10px 8px;
+    }
+    .page {
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto !important;
+      min-height: unset !important;
+      max-height: unset !important;
+      padding: 18px 14px !important;
+      margin: 12px 0 !important;
+      border-radius: 8px;
+      overflow-x: hidden;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+    .grid-2, .grid-3, .grid-4 {
+      grid-template-columns: 1fr !important;
+      gap: 8px !important;
+    }
+    .cover-meta-grid {
+      grid-template-columns: 1fr !important;
+      gap: 8px !important;
+    }
+    .cover-page {
+      padding: 24px 16px !important;
+      min-height: auto !important;
+      height: auto !important;
+    }
+    .cover-title {
+      font-size: 24pt !important;
+      line-height: 1.15 !important;
+    }
+    .cover-subtitle {
+      font-size: 11pt !important;
+      max-width: 100% !important;
+    }
+    table.doc-table {
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .math-box {
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+  }
+
+  @media print {
+    body {
+      background: #FFFFFF !important;
+      padding: 0 !important;
+    }
+    .pdf-control-toolbar, #pdf-viewer-container {
+      display: none !important;
+    }
+    #proposal-pages-container {
+      display: block !important;
+      padding: 0 !important;
+    }
+    .page {
+      width: 210mm !important;
+      height: 297mm !important;
+      max-height: 297mm !important;
+      min-height: 297mm !important;
+      padding: 13mm 15mm 13mm 15mm !important;
+      margin: 0 auto !important;
+      page-break-after: always !important;
+      break-after: page !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+    }
+    .grid-2 { display: grid !important; grid-template-columns: 1fr 1fr !important; }
+    .grid-3 { display: grid !important; grid-template-columns: 1fr 1fr 1fr !important; }
+    .grid-4 { display: grid !important; grid-template-columns: 1fr 1fr 1fr 1fr !important; }
+    .cover-meta-grid { display: grid !important; grid-template-columns: 1.2fr 1fr 1fr !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- STICKY TOP PDF TOOLBAR -->
+<div class="pdf-control-toolbar">
+  <div class="brand-group">
+    <svg viewBox="0 0 100 100" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="3" width="26" height="26" rx="6" fill="#F2EFE8"/>
+      <rect x="37" y="3" width="26" height="26" rx="6" fill="#F2EFE8"/>
+      <rect x="71" y="3" width="26" height="26" rx="6" fill="#F2EFE8"/>
+      <rect x="3" y="37" width="26" height="26" rx="6" fill="#F2EFE8"/>
+      <rect x="37" y="37" width="26" height="26" rx="6" fill="#0B0F19" stroke="#3A3F4D" stroke-width="2.5"/>
+      <rect x="71" y="37" width="26" height="26" rx="6" fill="#E0A45C"/>
+      <rect x="3" y="71" width="26" height="26" rx="6" fill="#F2EFE8"/>
+      <rect x="37" y="71" width="26" height="26" rx="6" fill="#F2EFE8"/>
+      <rect x="71" y="71" width="26" height="26" rx="6" fill="#F2EFE8"/>
+    </svg>
+    <div class="brand-title">UrbanTwin AI <span style="font-weight:400; color:#94A3B8;">— Proposal & Blueprint</span></div>
+    <span class="badge-status">12 Pages · Publication Grade PDF</span>
+  </div>
+  <div class="actions-group">
+    <a href="/proposal/download" download="UrbanTwin_AI_Detailed_Project_Proposal.pdf" class="btn-pdf btn-pdf-download" title="Download Official Vector PDF directly to your computer">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span>Download PDF (1.3 MB)</span>
+    </a>
+    <a href="/proposal.pdf" target="_blank" class="btn-pdf btn-pdf-action" title="Open Vector PDF in Browser's Native PDF Viewer">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      <span>Open in Native PDF Viewer</span>
+    </a>
+    <button onclick="togglePdfViewer()" id="viewerToggleBtn" class="btn-pdf btn-pdf-toggle" title="Toggle between Embedded PDF Viewer and Printable HTML Blueprint">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      <span id="viewerToggleLabel">View in Embedded PDF Viewer</span>
+    </button>
+    <button onclick="window.print()" class="btn-pdf btn-pdf-action" title="Print or Save as PDF via Browser Dialog">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      <span>Print Document</span>
+    </button>
+    <a href="/dashboard" class="btn-pdf btn-pdf-action" style="color:#94A3B8 !important;">
+      <span>← Live Dashboard</span>
+    </a>
+  </div>
+</div>
+
+<!-- EMBEDDED PDF VIEWER CONTAINER -->
+<div id="pdf-viewer-container">
+  <iframe id="pdf-viewer-frame" src="about:blank" title="UrbanTwin AI PDF Document Viewer"></iframe>
+</div>
+
+<div id="proposal-pages-container">
+
+<!-- ================= PAGE 1: COVER ================= -->
+<div class="page cover-page">
+    <div class="cover-header">
+    <div class="cover-brand" style="display: flex; align-items: center; gap: 12px;">
+      <svg viewBox="0 0 100 100" width="34" height="34" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink: 0;">
+        <!-- 3x3 Matrix C Mark (on-dark: 7 bone cells, 1 hollow cell, 1 copper cell) -->
+        <rect x="3" y="3" width="26" height="26" rx="6" fill="#F2EFE8"/>
+        <rect x="37" y="3" width="26" height="26" rx="6" fill="#F2EFE8"/>
+        <rect x="71" y="3" width="26" height="26" rx="6" fill="#F2EFE8"/>
+        <rect x="3" y="37" width="26" height="26" rx="6" fill="#F2EFE8"/>
+        <rect x="37" y="37" width="26" height="26" rx="6" fill="#0B0F19" stroke="#3A3F4D" stroke-width="2.5"/>
+        <rect x="71" y="37" width="26" height="26" rx="6" fill="#E0A45C"/>
+        <rect x="3" y="71" width="26" height="26" rx="6" fill="#F2EFE8"/>
+        <rect x="37" y="71" width="26" height="26" rx="6" fill="#F2EFE8"/>
+        <rect x="71" y="71" width="26" height="26" rx="6" fill="#F2EFE8"/>
+      </svg>
+      <div>
+        <div style="font-family: 'Space Grotesk', sans-serif; font-size: 15pt; font-weight: 800; letter-spacing: 0.12em; color: #F2EFE8; line-height: 1;">CIPHER</div>
+        <div style="font-size: 7.2pt; font-weight: 500; color: #94A3B8; letter-spacing: 0.05em; margin-top: 3px;">Decode. Build. Evolve.</div>
+      </div>
+    </div>
+    <div style="font-size: 7.5pt; font-weight: 600; color: #94A3B8; letter-spacing: 0.05em;">
+      GOVERNMENT & ENTERPRISE BLUEPRINT · ARCHITECTURE SPECIFICATION
+    </div>
+  </div>
+
+  <div class="cover-hero">
+    <div class="cover-tag">ENGINEERING PROPOSAL & TECHNICAL BLUEPRINT v2.4</div>
+    <div class="cover-title">UrbanTwin <span>AI</span></div>
+    <div class="cover-subtitle">
+      Multi-Camera Traffic Intelligence, Autonomous Optical ANPR OCR, 3D Spatial Trajectory Tracking & Predictive Urban Digital Twin
+    </div>
+    <div class="cover-pills">
+      <div class="cover-pill">✓ STN-CRNN ANPR OCR (>90% SLA)</div>
+      <div class="cover-pill">✓ Privacy Salted SHA-256 Hashing</div>
+      <div class="cover-pill">✓ 3D WebGL Digital Twin & What-If Simulation</div>
+      <div class="cover-pill">✓ Multi-Horizon ML Congestion Forecasting</div>
+      <div class="cover-pill">✓ Law Enforcement Hotlist & Intercept Radar</div>
+    </div>
+  </div>
+
+  <div class="cover-meta-grid">
+    <div class="cover-meta-item">
+      <div class="lbl">Primary Architect & Author</div>
+      <div class="val">Aniket Nandi</div>
+      <div class="sub">Lead Full-Stack AI Engineer · CIPHER</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="lbl">Agency & Headquarters</div>
+      <div class="val">CIPHER Agency</div>
+      <div class="sub">Kolkata, West Bengal (IST)</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="lbl">Release Status & Date</div>
+      <div class="val">Enterprise Ready (v2.4)</div>
+      <div class="sub">September 2026 · Confidential</div>
+    </div>
+  </div>
+
+  <div class="cover-footer">
+    <div>CIPHER Tech Solutions · Proprietary Document for Smart Cities, Law Enforcement & Traffic Authorities</div>
+    <div>Page 1 of 12 · Executive Release</div>
+  </div>
+</div>
+
+<!-- ================= PAGE 2 ================= -->
+<div class="page">
+  <div class="page-header">
+    <div class="brand" style="display: flex; align-items: center; gap: 6px;">
+        <svg viewBox="0 0 100 100" width="13" height="13" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink: 0; vertical-align: middle;">
+        <!-- 3x3 Matrix C Mark (on-light: 7 ink cells, 1 hollow cell, 1 copper cell) -->
+        <rect x="3" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="71" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="3" y="37" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="37" width="26" height="26" rx="6" fill="#FFFFFF" stroke="#94A3B8" stroke-width="3"/>
+        <rect x="71" y="37" width="26" height="26" rx="6" fill="#E0A45C"/>
+        <rect x="3" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="71" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+      </svg>
+        <span>CIPHER</span> · URBANTWIN AI
+      </div>
+    <div>SECTION 01: EXECUTIVE VISION & PROBLEM STATEMENT</div>
+  </div>
+  <div class="page-content">
+    <h2 class="section-title"><span class="sec-num">01</span> Executive Summary & Mission Statement</h2>
+    <p class="lead">
+      Modern metropolises are paralyzed by mounting traffic congestion, delayed emergency vehicle response, carbon emissions from excessive idling, and critical blind spots across municipal CCTV surveillance networks.
+    </p>
+    <p>
+      <strong>UrbanTwin AI</strong> resolves this fragmentation by establishing an end-to-end, high-throughput urban mobility digital twin and predictive traffic intelligence platform. Powered by an asynchronous <strong>FastAPI</strong> microservice core, <strong>PyTorch</strong> deep learning for perspective-invariant license plate character recognition (STN-CRNN), <strong>graph-topological</strong> route matching, <strong>XGBoost</strong> multi-horizon congestion forecasting, and a real-time <strong>Three.js WebGL</strong> 3D cyber-command dashboard, UrbanTwin AI unifies isolated camera streams into an actionable spatial-temporal continuum.
+    </p>
+
+    <h2 class="section-title" style="margin-top: 6px;"><span class="sec-num">02</span> The Traditional Traffic Management Dilemma</h2>
+    <div class="grid-2">
+      <div class="card card-alert">
+        <h3 class="subsection-title" style="color: #B91C1C;">1. Isolated Camera Silos</h3>
+        <p>Current edge CCTV and ANPR installations process video in disconnected boundaries. While individual cameras detect vehicles, municipal networks cannot cross-correlate movement across junctions or detect coordinated travel patterns.</p>
+      </div>
+      <div class="card card-alert">
+        <h3 class="subsection-title" style="color: #B91C1C;">2. Environmental OCR Degradation</h3>
+        <p>Standard open-source OCR engines degrade below 60% accuracy during heavy monsoon rain, nighttime headlight flare, high-speed motion blur (60–100 km/h), oblique camera angles, and soiled plates.</p>
+      </div>
+      <div class="card card-alert">
+        <h3 class="subsection-title" style="color: #B91C1C;">3. Lack of Predictive Foresight</h3>
+        <p>Traffic control rooms operate reactively. Congestion is identified only after gridlock forms, leaving zero opportunity for proactive signal timing adjustment or dynamic arterial rerouting.</p>
+      </div>
+      <div class="card card-alert">
+        <h3 class="subsection-title" style="color: #B91C1C;">4. High-Risk Real-World Interventions</h3>
+        <p>Closing a road for maintenance or adjusting intersection phase splits currently requires physical experimentation on live traffic, risking catastrophic gridlock without prior simulation.</p>
+      </div>
+    </div>
+
+    <h2 class="section-title" style="margin-top: 6px;"><span class="sec-num">03</span> The UrbanTwin AI Architectural Paradigm Shift</h2>
+    <div class="grid-2">
+      <div class="card">
+        <div class="badge badge-slate" style="margin-bottom: 4px;">CONVENTIONAL SYSTEM (LEGACY)</div>
+        <ul class="bullet-list">
+          <li>Camera 01 → Isolated Vehicle Detection (No Tracking)</li>
+          <li>Camera 02 → Disconnected Count Log (Local DB)</li>
+          <li>Camera 03 → Manual Video Inspection on Incident</li>
+          <li>Zero spatial linkage; plates stored in plain PII text</li>
+          <li>Static phase timers; zero predictive forecasting</li>
+        </ul>
+      </div>
+      <div class="card card-highlight">
+        <div class="badge badge-green" style="margin-bottom: 4px;">URBANTWIN AI DIGITAL TWIN</div>
+        <ul class="bullet-list">
+          <li>Camera 01 → Vehicle A → Camera 02 → Camera 07 (Global ReID)</li>
+          <li>Graph-topological route reconstruction & Speed Violation Flagging</li>
+          <li>Salted SHA-256 cryptographic plate anonymization (GDPR/CCPA)</li>
+          <li>5m / 15m / 30m ML Congestion Forecasting with Confidence Bounds</li>
+          <li>Zero-Risk "What-If" Scenario Simulation in 3D WebGL Digital Twin</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card card-bordered" style="margin-top: 4px;">
+      <h3 class="subsection-title">Core Value Propositions for Municipal & Law Enforcement Authorities</h3>
+      <p>
+        <strong>1. 90%+ ANPR Accuracy Guarantee:</strong> Spatial Transformer Networks (STN) auto-rectify plate homography before CTC loss decoding.<br>
+        <strong>2. Automated Law Enforcement Intercept:</strong> Flags stolen/blacklisted plates and calculates downstream intercept ETAs in seconds.<br>
+        <strong>3. Proactive Congestion Relief:</strong> Evaluates scenario interventions (e.g. +20% surge, lane closures, signal green extensions) before ground deployment.
+      </p>
+    </div>
+  </div>
+  <div class="page-footer">
+    <div>CIPHER Web & AI Solutions · UrbanTwin AI Project Proposal</div>
+    <div class="page-num">Page 2 of 12</div>
+  </div>
+</div>
+
+<!-- ================= PAGE 3 ================= -->
+<div class="page">
+  <div class="page-header">
+    <div class="brand" style="display: flex; align-items: center; gap: 6px;">
+        <svg viewBox="0 0 100 100" width="13" height="13" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink: 0; vertical-align: middle;">
+        <!-- 3x3 Matrix C Mark (on-light: 7 ink cells, 1 hollow cell, 1 copper cell) -->
+        <rect x="3" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="71" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="3" y="37" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="37" width="26" height="26" rx="6" fill="#FFFFFF" stroke="#94A3B8" stroke-width="3"/>
+        <rect x="71" y="37" width="26" height="26" rx="6" fill="#E0A45C"/>
+        <rect x="3" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="71" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+      </svg>
+        <span>CIPHER</span> · URBANTWIN AI
+      </div>
+    <div>SECTION 02: OBJECTIVES & SYSTEM ARCHITECTURE</div>
+  </div>
+  <div class="page-content">
+    <h2 class="section-title"><span class="sec-num">04</span> Ten Core Engineering Objectives</h2>
+    <div class="grid-2">
+      <div class="card">
+        <ul class="bullet-list">
+          <li><strong>1. Edge Telemetry Stream:</strong> Ingest multi-camera video and live sensor telemetry (FPS, VPH, optical health).</li>
+          <li><strong>2. High-Accuracy OCR:</strong> Achieve &gt;90% character accuracy across 6 severe optical degradation states.</li>
+          <li><strong>3. Privacy-Preserving Hashing:</strong> Salted SHA-256 cryptographic plate masking for GDPR/CCPA compliance.</li>
+          <li><strong>4. Cross-Camera ReID:</strong> Multi-factor spatial-temporal matching across distributed junctions.</li>
+          <li><strong>5. Trajectory Reconstruction:</strong> Continuous route graph plotting with speed violation enforcement.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <ul class="bullet-list">
+          <li><strong>6. Macro Traffic Analytics:</strong> Level of Service (LOS A–F) metrics and Origin-Destination (OD) density matrices.</li>
+          <li><strong>7. ML Congestion Forecasting:</strong> Real-time 5m, 15m, 30m congestion and corridor speed prediction.</li>
+          <li><strong>8. Anomaly Radar:</strong> Real-time detection of speed drops, ghost vehicles/spoofing, and loitering.</li>
+          <li><strong>9. Digital Twin Simulation:</strong> "What-If" intervention modeling (road closures, surges, signal timings).</li>
+          <li><strong>10. 3D Cyber Command Center:</strong> Three.js WebGL canvas, Leaflet GIS, and real-time Chart.js telemetry.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2 class="section-title" style="margin-top: 6px;"><span class="sec-num">05</span> High-Level Layered System Architecture</h2>
+    
+    <!-- SVG Architecture Diagram -->
+    <div style="background: #0F172A; border-radius: 6px; padding: 8px 10px; margin: 4px 0;">
+      <svg viewBox="0 0 700 230" width="100%" height="210" xmlns="http://www.w3.org/2000/svg" style="font-family: 'Inter', sans-serif;">
+        <!-- Layer 1: Edge -->
+        <rect x="10" y="10" width="150" height="210" rx="5" fill="#1E293B" stroke="#334155" stroke-width="1.5"/>
+        <text x="85" y="30" fill="#94A3B8" font-size="9" font-weight="700" text-anchor="middle" letter-spacing="0.05em">EDGE TELEMETRY</text>
+        <rect x="25" y="45" width="120" height="35" rx="4" fill="#0F172A" stroke="#38BDF8" stroke-width="1"/>
+        <text x="85" y="60" fill="#38BDF8" font-size="8" font-weight="600" text-anchor="middle">CAM_01 to CAM_08</text>
+        <text x="85" y="72" fill="#94A3B8" font-size="7" text-anchor="middle">RTSP / 4K Feeds / FPS</text>
+        <rect x="25" y="90" width="120" height="35" rx="4" fill="#0F172A" stroke="#38BDF8" stroke-width="1"/>
+        <text x="85" y="105" fill="#38BDF8" font-size="8" font-weight="600" text-anchor="middle">YOLOv8 Detection</text>
+        <text x="85" y="117" fill="#94A3B8" font-size="7" text-anchor="middle">Car/Bus/Truck/Bike</text>
+        <rect x="25" y="135" width="120" height="35" rx="4" fill="#0F172A" stroke="#38BDF8" stroke-width="1"/>
+        <text x="85" y="150" fill="#38BDF8" font-size="8" font-weight="600" text-anchor="middle">ByteTrack / BoT-SORT</text>
+        <text x="85" y="162" fill="#94A3B8" font-size="7" text-anchor="middle">Intra-Camera Tracklets</text>
+        <rect x="25" y="180" width="120" height="28" rx="4" fill="#0F172A" stroke="#38BDF8" stroke-width="1"/>
+        <text x="85" y="197" fill="#E2E8F0" font-size="7.5" font-weight="600" text-anchor="middle">Optical Ingestion API</text>
+
+        <!-- Arrow 1 -->
+        <path d="M 160 115 L 185 115" stroke="#60A5FA" stroke-width="2" marker-end="url(#arrow)"/>
+
+        <!-- Layer 2: Gateway & Security -->
+        <rect x="190" y="10" width="125" height="210" rx="5" fill="#1E293B" stroke="#334155" stroke-width="1.5"/>
+        <text x="252" y="30" fill="#94A3B8" font-size="9" font-weight="700" text-anchor="middle" letter-spacing="0.05em">GATEWAY & SECURITY</text>
+        <rect x="200" y="45" width="105" height="40" rx="4" fill="#0F172A" stroke="#A78BFA" stroke-width="1"/>
+        <text x="252" y="62" fill="#A78BFA" font-size="8" font-weight="600" text-anchor="middle">JWT Bearer Auth</text>
+        <text x="252" y="75" fill="#94A3B8" font-size="7" text-anchor="middle">Bcrypt Salt Hashing</text>
+        <rect x="200" y="95" width="105" height="40" rx="4" fill="#0F172A" stroke="#A78BFA" stroke-width="1"/>
+        <text x="252" y="112" fill="#A78BFA" font-size="8" font-weight="600" text-anchor="middle">SlowAPI Limiting</text>
+        <text x="252" y="125" fill="#94A3B8" font-size="7" text-anchor="middle">60-120 req/min DDoS</text>
+        <rect x="200" y="145" width="105" height="55" rx="4" fill="#0F172A" stroke="#A78BFA" stroke-width="1"/>
+        <text x="252" y="162" fill="#A78BFA" font-size="8" font-weight="600" text-anchor="middle">Security Middleware</text>
+        <text x="252" y="175" fill="#94A3B8" font-size="7" text-anchor="middle">HSTS, CSP, XSS</text>
+        <text x="252" y="188" fill="#94A3B8" font-size="7" text-anchor="middle">CORS Whitelist</text>
+
+        <!-- Arrow 2 -->
+        <path d="M 315 115 L 340 115" stroke="#60A5FA" stroke-width="2"/>
+
+        <!-- Layer 3: Core AI -->
+        <rect x="345" y="10" width="185" height="210" rx="5" fill="#1E293B" stroke="#334155" stroke-width="1.5"/>
+        <text x="437" y="30" fill="#94A3B8" font-size="9" font-weight="700" text-anchor="middle" letter-spacing="0.05em">CORE AI & GRAPH SERVICES</text>
+        <rect x="355" y="42" width="165" height="30" rx="4" fill="#0F172A" stroke="#34D399" stroke-width="1"/>
+        <text x="437" y="56" fill="#34D399" font-size="7.8" font-weight="600" text-anchor="middle">STN-CRNN ANPR OCR Engine</text>
+        <text x="437" y="67" fill="#94A3B8" font-size="6.8" text-anchor="middle">Spatial Transformer + BiLSTM + CTC</text>
+        <rect x="355" y="76" width="165" height="30" rx="4" fill="#0F172A" stroke="#34D399" stroke-width="1"/>
+        <text x="437" y="90" fill="#34D399" font-size="7.8" font-weight="600" text-anchor="middle">Cross-Camera ReID & Trajectory</text>
+        <text x="437" y="101" fill="#94A3B8" font-size="6.8" text-anchor="middle">Graph Route Consistency & Salted Hashing</text>
+        <rect x="355" y="110" width="165" height="30" rx="4" fill="#0F172A" stroke="#34D399" stroke-width="1"/>
+        <text x="437" y="124" fill="#34D399" font-size="7.8" font-weight="600" text-anchor="middle">Macro Analytics & LOS (A–F)</text>
+        <text x="437" y="135" fill="#94A3B8" font-size="6.8" text-anchor="middle">HCM Density, Speed & OD Commuter Matrix</text>
+        <rect x="355" y="144" width="165" height="30" rx="4" fill="#0F172A" stroke="#34D399" stroke-width="1"/>
+        <text x="437" y="158" fill="#34D399" font-size="7.8" font-weight="600" text-anchor="middle">ML Forecasting (5m, 15m, 30m)</text>
+        <text x="437" y="169" fill="#94A3B8" font-size="6.8" text-anchor="middle">XGBoost + LSTM Ensembled Regression</text>
+        <rect x="355" y="178" width="165" height="32" rx="4" fill="#0F172A" stroke="#34D399" stroke-width="1"/>
+        <text x="437" y="192" fill="#34D399" font-size="7.8" font-weight="600" text-anchor="middle">What-If Digital Twin Simulation</text>
+        <text x="437" y="203" fill="#94A3B8" font-size="6.8" text-anchor="middle">Road Closures, Surges & Signal Timing</text>
+
+        <!-- Arrow 3 -->
+        <path d="M 530 115 L 555 115" stroke="#60A5FA" stroke-width="2"/>
+
+        <!-- Layer 4: Presentation -->
+        <rect x="560" y="10" width="130" height="210" rx="5" fill="#1E293B" stroke="#334155" stroke-width="1.5"/>
+        <text x="625" y="30" fill="#94A3B8" font-size="9" font-weight="700" text-anchor="middle" letter-spacing="0.05em">COMMAND CENTER</text>
+        <rect x="570" y="45" width="110" height="45" rx="4" fill="#0F172A" stroke="#F472B6" stroke-width="1"/>
+        <text x="625" y="63" fill="#F472B6" font-size="8" font-weight="600" text-anchor="middle">Three.js 3D WebGL</text>
+        <text x="625" y="75" fill="#94A3B8" font-size="7" text-anchor="middle">3D Corridor Tubes</text>
+        <text x="625" y="85" fill="#94A3B8" font-size="7" text-anchor="middle">Spatial Node Visuals</text>
+        <rect x="570" y="98" width="110" height="45" rx="4" fill="#0F172A" stroke="#F472B6" stroke-width="1"/>
+        <text x="625" y="116" fill="#F472B6" font-size="8" font-weight="600" text-anchor="middle">Leaflet GIS Engine</text>
+        <text x="625" y="128" fill="#94A3B8" font-size="7" text-anchor="middle">2D Satellite Map</text>
+        <text x="625" y="138" fill="#94A3B8" font-size="7" text-anchor="middle">Trajectory Waypoints</text>
+        <rect x="570" y="152" width="110" height="45" rx="4" fill="#0F172A" stroke="#F472B6" stroke-width="1"/>
+        <text x="625" y="170" fill="#F472B6" font-size="8" font-weight="600" text-anchor="middle">Chart.js Telemetry</text>
+        <text x="625" y="182" fill="#94A3B8" font-size="7" text-anchor="middle">Live Speed & Flow</text>
+        <text x="625" y="192" fill="#94A3B8" font-size="7" text-anchor="middle">Forecast Curves</text>
+      </svg>
+    </div>
+
+    <div class="card card-bordered">
+      <h3 class="subsection-title">Data Ingestion SLA & Latency Budget</h3>
+      <p>
+        The pipeline guarantees sub-second event turnaround: Frame Ingestion &rarr; YOLO Detection (18ms) &rarr; STN Rectification &amp; CRNN OCR (34ms) &rarr; SHA-256 Hashing &amp; ReID Match (8ms) &rarr; XGBoost Forecast (4ms) &rarr; WebSocket / UI Sync (12ms). Total end-to-end edge-to-dashboard processing completes in &lt;80ms per camera frame.
+      </p>
+    </div>
+  </div>
+  <div class="page-footer">
+    <div>CIPHER Web & AI Solutions · UrbanTwin AI Project Proposal</div>
+    <div class="page-num">Page 3 of 12</div>
+  </div>
+</div>
+
+<!-- ================= PAGE 4 ================= -->
+<div class="page">
+  <div class="page-header">
+    <div class="brand" style="display: flex; align-items: center; gap: 6px;">
+        <svg viewBox="0 0 100 100" width="13" height="13" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink: 0; vertical-align: middle;">
+        <!-- 3x3 Matrix C Mark (on-light: 7 ink cells, 1 hollow cell, 1 copper cell) -->
+        <rect x="3" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="71" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="3" y="37" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="37" width="26" height="26" rx="6" fill="#FFFFFF" stroke="#94A3B8" stroke-width="3"/>
+        <rect x="71" y="37" width="26" height="26" rx="6" fill="#E0A45C"/>
+        <rect x="3" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="71" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+      </svg>
+        <span>CIPHER</span> · URBANTWIN AI
+      </div>
+    <div>SECTION 03: EDGE TELEMETRY & STN-CRNN OCR</div>
+  </div>
+  <div class="page-content">
+    <h2 class="section-title"><span class="sec-num">06</span> Modules 1 to 3: Camera Ingestion, Detection & Tracking</h2>
+    <div class="grid-3">
+      <div class="card">
+        <h3 class="subsection-title" style="color: #2563EB;">Module 1: Ingestion</h3>
+        <p>Manages 8 edge nodes configured in a directed graph. Ingests video at 25–30 FPS, monitors optical health (`ONLINE`, `DEGRADED`, `OFFLINE`), flow rate (VPH), and camera coordinates.</p>
+      </div>
+      <div class="card">
+        <h3 class="subsection-title" style="color: #2563EB;">Module 2: Detection</h3>
+        <p>YOLOv8 CNN detects multiple vehicle categories (cars, buses, trucks, motorbikes) with sub-pixel bounding box regression and confidence thresholding (&gt;0.85).</p>
+      </div>
+      <div class="card">
+        <h3 class="subsection-title" style="color: #2563EB;">Module 3: Tracking</h3>
+        <p>ByteTrack maintains continuous tracklet IDs using Kalman filter state estimation across frames: \(x = [u, v, s, r, \dot{u}, \dot{v}, \dot{s}]\), avoiding identity swaps.</p>
+      </div>
+    </div>
+
+    <h2 class="section-title" style="margin-top: 6px;"><span class="sec-num">07</span> Module 4: High-Accuracy STN-CRNN ANPR OCR Engine (&gt;90% SLA)</h2>
+    <p>
+      Traditional ANPR algorithms fail when license plates are tilted or captured under oblique angles. UrbanTwin AI integrates a <strong>Spatial Transformer Network (STN)</strong> with a <strong>Convolutional Recurrent Neural Network (CRNN)</strong> trained via <strong>Connectionist Temporal Classification (CTC)</strong> loss.
+    </p>
+
+    <div class="grid-2" style="margin-top: 2px;">
+      <div class="card">
+        <h3 class="subsection-title">1. STN Dynamic Affine Rectification</h3>
+        <p>The Localization Net estimates the 2&times;3 transformation matrix &theta; to align distorted plates into a normalized horizontal coordinate space before OCR decoding:</p>
+        <div class="math-box">
+          &theta; = [ [ s_x,  sh_x,  t_x ], [ sh_y,  s_y,  t_y ] ]
+        </div>
+        <p style="font-size: 7.2pt; color: #64748B;">Eliminates the need for manual geometric camera perspective recalibration.</p>
+      </div>
+      <div class="card">
+        <h3 class="subsection-title">2. CRNN + CTC Loss Architecture</h3>
+        <p><strong>Backbone:</strong> 5-layer VGG CNN extracts a sequence of visual feature vectors.<br>
+        <strong>Sequence Modeling:</strong> 2-layer Bidirectional LSTM models horizontal character transitions.<br>
+        <strong>Transcription:</strong> PyTorch `nn.CTCLoss` greedy-decodes predictions without per-character bounding box annotations.</p>
+      </div>
+    </div>
+
+    <h3 class="subsection-title" style="margin-top: 6px;">Environmental Degradation Stress-Testing Benchmark</h3>
+    <p style="font-size: 7.5pt; color: #64748B; margin-bottom: 3px;">Empirical evaluation under 6 severe environmental conditions verified against Indian vehicle plate standards:</p>
+    <table class="doc-table">
+      <thead>
+        <tr>
+          <th>Degradation Scenario</th>
+          <th>Simulated Optical Disturbance</th>
+          <th>Legacy OCR</th>
+          <th>UrbanTwin STN-CRNN</th>
+          <th>SLA Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Clean Baseline</strong></td>
+          <td>Ideal daylight, perpendicular line-of-sight</td>
+          <td>91.2%</td>
+          <td><strong>98.6%</strong></td>
+          <td><span class="badge badge-green">SURPASSED</span></td>
+        </tr>
+        <tr>
+          <td><strong>Monsoon Rain</strong></td>
+          <td>Water droplet blur, streak artifacts, sensor noise</td>
+          <td>61.4%</td>
+          <td><strong>94.2%</strong></td>
+          <td><span class="badge badge-green">&gt;90% SLA</span></td>
+        </tr>
+        <tr>
+          <td><strong>Night Headlight Glare</strong></td>
+          <td>High-intensity beam bloom, localized plate washout</td>
+          <td>52.8%</td>
+          <td><strong>91.8%</strong></td>
+          <td><span class="badge badge-green">&gt;90% SLA</span></td>
+        </tr>
+        <tr>
+          <td><strong>High-Speed Motion Blur</strong></td>
+          <td>Horizontal PSF blur (vehicles at 70–100 km/h)</td>
+          <td>58.2%</td>
+          <td><strong>93.4%</strong></td>
+          <td><span class="badge badge-green">&gt;90% SLA</span></td>
+        </tr>
+        <tr>
+          <td><strong>Mud & Grime Occlusion</strong></td>
+          <td>Soil splatters, partial alphanumeric occlusion</td>
+          <td>49.6%</td>
+          <td><strong>90.6%</strong></td>
+          <td><span class="badge badge-green">&gt;90% SLA</span></td>
+        </tr>
+        <tr>
+          <td><strong>Oblique Perspective Skew</strong></td>
+          <td>35&deg;–50&deg; acute off-axis roadside camera mount</td>
+          <td>54.1%</td>
+          <td><strong>95.1%</strong></td>
+          <td><span class="badge badge-green">&gt;90% SLA</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="code-block" style="margin-top: 4px;">
+      <span class="cmt"># Character-Level Confidence Scoring Payload</span><br>
+      { <span class="kwd">"plate"</span>: <span class="str">"KA01MJ5022"</span>, <span class="kwd">"stn_rectified"</span>: <span class="num">true</span>, <span class="kwd">"overall_confidence"</span>: <span class="num">0.962</span>, <br>
+        <span class="kwd">"characters"</span>: [<br>
+          { <span class="kwd">"char"</span>: <span class="str">"K"</span>, <span class="kwd">"conf"</span>: <span class="num">0.99</span> }, { <span class="kwd">"char"</span>: <span class="str">"A"</span>, <span class="kwd">"conf"</span>: <span class="num">0.98</span> }, { <span class="kwd">"char"</span>: <span class="str">"0"</span>, <span class="kwd">"conf"</span>: <span class="num">0.95</span> }, { <span class="kwd">"char"</span>: <span class="str">"1"</span>, <span class="kwd">"conf"</span>: <span class="num">0.97</span> },<br>
+          { <span class="kwd">"char"</span>: <span class="str">"M"</span>, <span class="kwd">"conf"</span>: <span class="num">0.94</span> }, { <span class="kwd">"char"</span>: <span class="str">"J"</span>, <span class="kwd">"conf"</span>: <span class="num">0.96</span> }, { <span class="kwd">"char"</span>: <span class="str">"5"</span>, <span class="kwd">"conf"</span>: <span class="num">0.98</span> }, { <span class="kwd">"char"</span>: <span class="str">"0"</span>, <span class="kwd">"conf"</span>: <span class="num">0.95</span> },<br>
+          { <span class="kwd">"char"</span>: <span class="str">"2"</span>, <span class="kwd">"conf"</span>: <span class="num">0.96</span> }, { <span class="kwd">"char"</span>: <span class="str">"2"</span>, <span class="kwd">"conf"</span>: <span class="num">0.94</span> }<br>
+        ] }
+    </div>
+  </div>
+  <div class="page-footer">
+    <div>CIPHER Web & AI Solutions · UrbanTwin AI Project Proposal</div>
+    <div class="page-num">Page 4 of 12</div>
+  </div>
+</div>
+
+<!-- ================= PAGE 5 ================= -->
+<div class="page">
+  <div class="page-header">
+    <div class="brand" style="display: flex; align-items: center; gap: 6px;">
+        <svg viewBox="0 0 100 100" width="13" height="13" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink: 0; vertical-align: middle;">
+        <!-- 3x3 Matrix C Mark (on-light: 7 ink cells, 1 hollow cell, 1 copper cell) -->
+        <rect x="3" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="71" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="3" y="37" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="37" width="26" height="26" rx="6" fill="#FFFFFF" stroke="#94A3B8" stroke-width="3"/>
+        <rect x="71" y="37" width="26" height="26" rx="6" fill="#E0A45C"/>
+        <rect x="3" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="71" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+      </svg>
+        <span>CIPHER</span> · URBANTWIN AI
+      </div>
+    <div>SECTION 04: PRIVACY, REID & MACRO ANALYTICS</div>
+  </div>
+  <div class="page-content">
+    <h2 class="section-title"><span class="sec-num">08</span> Module 5: Privacy-Preserving Cryptographic Hashing (GDPR / CCPA)</h2>
+    <p>
+      UrbanTwin AI guarantees full privacy compliance by prohibiting the storage of raw plaintext license plate numbers across database tables and public API responses.
+    </p>
+    <div class="grid-2">
+      <div class="card card-highlight">
+        <h3 class="subsection-title">1. Salted SHA-256 Hashing</h3>
+        <p>Detected plate strings are immediately combined with an enterprise-grade cryptographic salt and hashed:</p>
+        <div class="math-box">
+          H = \text{SHA256}( \text{PlateText} \parallel \text{SecretSalt} )
+        </div>
+        <p style="font-size: 7.2pt; color: #475569;">Irreversible one-way cryptographic transformation prevents rainbow-table harvesting.</p>
+      </div>
+      <div class="card card-highlight">
+        <h3 class="subsection-title">2. Visual Data Anonymization</h3>
+        <p>In all logging interfaces and operator displays, plate numbers are masked automatically:</p>
+        <div class="code-block" style="padding: 4px 6px; font-size: 6.5pt;">
+          Raw Input: KA01MJ5022<br>
+          Masked UI: KA01-***<br>
+          DB Hash: 9f8a6c3b...e142
+        </div>
+      </div>
+    </div>
+
+    <h2 class="section-title" style="margin-top: 6px;"><span class="sec-num">09</span> Module 6: Cross-Camera Re-Identification & Trajectory Reconstruction</h2>
+    <p>
+      Associating vehicle observations across disparate camera feeds without relying exclusively on OCR requires a multi-factor probabilistic scoring function:
+    </p>
+    <div class="math-box" style="font-size: 8pt; padding: 6px; margin: 4px 0;">
+      S_{\text{match}} = w_1 S_{\text{plate}} + w_2 S_{\text{type}} + w_3 S_{\text{appearance}} + w_4 S_{\text{travel\_time}} + w_5 S_{\text{route}}
+    </div>
+    <div class="grid-3" style="font-size: 7pt; margin-bottom: 4px;">
+      <div class="card"><span class="badge badge-blue">S_plate</span> Levenshtein string similarity &amp; character confidence</div>
+      <div class="card"><span class="badge badge-purple">S_time</span> Transit delta vs. expected road segment speed</div>
+      <div class="card"><span class="badge badge-amber">S_route</span> Graph topological validity of connected corridors</div>
+    </div>
+
+    <div class="card card-bordered">
+      <h3 class="subsection-title">Spatial-Temporal Waypoint History & Speed Enforcement</h3>
+      <p>
+        Reconstructed journeys generate an ordered list of waypoints with arrival timestamps, camera IDs, segment distances, and calculated speeds. If calculated speed exceeds corridor limits (e.g. &gt;60 km/h on MG Road), the waypoint is flagged with `speed_violation: true` and dispatched to traffic enforcement.
+      </p>
+    </div>
+
+    <h2 class="section-title" style="margin-top: 6px;"><span class="sec-num">10</span> Module 7: Macroscopic Traffic Analytics & Level of Service (LOS)</h2>
+    <p style="font-size: 7.5pt; color: #64748B;">Corridor congestion is classified using the global Highway Capacity Manual (HCM) standard:</p>
+    <table class="doc-table">
+      <thead>
+        <tr>
+          <th>LOS Tier</th>
+          <th>Operating Condition</th>
+          <th>Average Speed</th>
+          <th>Corridor Occupancy</th>
+          <th>Operational Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>LOS A</strong></td>
+          <td>Free Flow</td>
+          <td>&ge; 55 km/h</td>
+          <td>&lt; 20%</td>
+          <td><span class="badge badge-green">OPTIMAL</span></td>
+        </tr>
+        <tr>
+          <td><strong>LOS B</strong></td>
+          <td>Reasonably Free Flow</td>
+          <td>45 – 54 km/h</td>
+          <td>20% – 35%</td>
+          <td><span class="badge badge-green">STABLE</span></td>
+        </tr>
+        <tr>
+          <td><strong>LOS C</strong></td>
+          <td>Stable Flow</td>
+          <td>35 – 44 km/h</td>
+          <td>36% – 50%</td>
+          <td><span class="badge badge-blue">ACCEPTABLE</span></td>
+        </tr>
+        <tr>
+          <td><strong>LOS D</strong></td>
+          <td>Approaching Unstable</td>
+          <td>25 – 34 km/h</td>
+          <td>51% – 70%</td>
+          <td><span class="badge badge-amber">MODERATE CONGESTION</span></td>
+        </tr>
+        <tr>
+          <td><strong>LOS E</strong></td>
+          <td>Unstable / Capacity Limit</td>
+          <td>15 – 24 km/h</td>
+          <td>71% – 89%</td>
+          <td><span class="badge badge-amber">HEAVY GRIDLOCK</span></td>
+        </tr>
+        <tr>
+          <td><strong>LOS F</strong></td>
+          <td>Forced Flow / Breakdown</td>
+          <td>&lt; 15 km/h</td>
+          <td>&ge; 90%</td>
+          <td><span class="badge badge-alert" style="background:#FEE2E2; color:#B91C1C;">SYSTEMIC BREAKDOWN</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="card" style="margin-top: 4px;">
+      <h3 class="subsection-title">Origin-Destination (OD) Commuter Matrix</h3>
+      <p>
+        The platform dynamically computes OD trip distribution pairs (e.g. Domlur &rarr; Trinity Junction: 420 VPH, 7.2 min avg transit, 64% cars, 22% 2-wheelers), revealing dominant arterial corridors for municipal infrastructure expansion.
+      </p>
+    </div>
+  </div>
+  <div class="page-footer">
+    <div>CIPHER Web & AI Solutions · UrbanTwin AI Project Proposal</div>
+    <div class="page-num">Page 5 of 12</div>
+  </div>
+</div>
+
+<!-- ================= PAGE 6 ================= -->
+<div class="page">
+  <div class="page-header">
+    <div class="brand" style="display: flex; align-items: center; gap: 6px;">
+        <svg viewBox="0 0 100 100" width="13" height="13" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink: 0; vertical-align: middle;">
+        <!-- 3x3 Matrix C Mark (on-light: 7 ink cells, 1 hollow cell, 1 copper cell) -->
+        <rect x="3" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="71" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="3" y="37" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="37" width="26" height="26" rx="6" fill="#FFFFFF" stroke="#94A3B8" stroke-width="3"/>
+        <rect x="71" y="37" width="26" height="26" rx="6" fill="#E0A45C"/>
+        <rect x="3" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="71" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+      </svg>
+        <span>CIPHER</span> · URBANTWIN AI
+      </div>
+    <div>SECTION 05: BEHAVIORAL RADAR & ML FORECASTING</div>
+  </div>
+  <div class="page-content">
+    <h2 class="section-title"><span class="sec-num">11</span> Module 8: Real-Time Vehicle Behavioral Anomaly Radar</h2>
+    <p>
+      Traditional blacklists only match static records. UrbanTwin AI features an AI-driven behavioral radar that detects anomalous and evasive driving maneuvers across cameras in real-time:
+    </p>
+
+    <div class="grid-3">
+      <div class="card card-alert">
+        <h3 class="subsection-title" style="color: #B91C1C;">1. Ghost Vehicle / Teleportation</h3>
+        <p>Flags when the exact same plate is observed at two distant camera nodes in a delta time that would require impossible velocities (&gt;180 km/h). Flags clone plates or spoofing.</p>
+      </div>
+      <div class="card card-alert">
+        <h3 class="subsection-title" style="color: #B91C1C;">2. Corridor Speeding Runs</h3>
+        <p>Identifies vehicles executing sustained high-speed runs across sequential checkpoint nodes (e.g. MG Road &rarr; Domlur expressway), alerting highway patrol.</p>
+      </div>
+      <div class="card card-alert">
+        <h3 class="subsection-title" style="color: #B91C1C;">3. Suspicious Loitering / Circling</h3>
+        <p>Detects vehicles repeatedly circling high-security administrative zones or embassy perimeters within short timeframes (repeated cyclic node transitions).</p>
+      </div>
+    </div>
+
+    <h2 class="section-title" style="margin-top: 6px;"><span class="sec-num">12</span> Module 9: Law Enforcement Hotlist & Automated Intercept Dispatch</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3 class="subsection-title">1. National Warrant Hotlist Matching</h3>
+        <p>Integrates with municipal police databases. When a flagged stolen or wanted vehicle triggers an edge camera, an immediate high-priority alert is generated.</p>
+        <div class="code-block" style="margin-top: 4px; font-size: 6.5pt;">
+          ALERT_TYPE: HOTLIST_WARRANT_INTERCEPT<br>
+          PLATE_HASH: 7a2b9e... · REASON: STOLEN_SUV<br>
+          SEVERITY: CRITICAL · CONFIDENCE: 0.982
+        </div>
+      </div>
+      <div class="card card-highlight">
+        <h3 class="subsection-title">2. Graph-Based Intercept ETA Engine</h3>
+        <p>Upon detection, the system models all forward paths from the current node along the road graph, identifies the most probable intercept junction, and computes exact field unit intercept countdowns:</p>
+        <div class="math-box">
+          \text{ETA}_{\text{intercept}} = \frac{D_{\text{remaining}}}{V_{\text{corridor\_avg}}} \pm \sigma_{\text{traffic}}
+        </div>
+      </div>
+    </div>
+
+    <h2 class="section-title" style="margin-top: 6px;"><span class="sec-num">13</span> Module 10: Multi-Horizon ML Congestion & Speed Forecasting</h2>
+    <p>
+      Instead of predicting single-step next intervals, UrbanTwin AI generates simultaneous multi-horizon forecasts using an ensembled <strong>XGBoost + LSTM</strong> model trained on historic time-series flow patterns:
+    </p>
+
+    <div class="grid-3" style="margin: 4px 0;">
+      <div class="card">
+        <div class="badge badge-blue">HORIZON 1: 5 MINUTES</div>
+        <p style="margin-top: 3px;">Short-term micro-adjustment horizon. Guides local dynamic traffic light green-extension cycles.</p>
+        <div style="font-size: 7pt; font-weight: 700; color: #2563EB;">MAE: 1.82% · Error &plusmn;2.4%</div>
+      </div>
+      <div class="card">
+        <div class="badge badge-purple">HORIZON 2: 15 MINUTES</div>
+        <p style="margin-top: 3px;">Tactical corridor diversion horizon. Guides arterial variable message signs (VMS) rerouting.</p>
+        <div style="font-size: 7pt; font-weight: 700; color: #7C3AED;">MAE: 2.41% · Error &plusmn;4.1%</div>
+      </div>
+      <div class="card">
+        <div class="badge badge-amber">HORIZON 3: 30 MINUTES</div>
+        <p style="margin-top: 3px;">Strategic city-wide redistribution horizon. Guides police shift deployment and emergency routes.</p>
+        <div style="font-size: 7pt; font-weight: 700; color: #D97706;">MAE: 3.15% · Error &plusmn;6.8%</div>
+      </div>
+    </div>
+
+    <table class="doc-table" style="margin-top: 4px;">
+      <thead>
+        <tr>
+          <th>Corridor Segment</th>
+          <th>Current Speed</th>
+          <th>5-Min Forecast</th>
+          <th>15-Min Forecast</th>
+          <th>30-Min Forecast</th>
+          <th>Trend Direction</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>MG Road &rarr; Trinity</strong></td>
+          <td>38 km/h (LOS C)</td>
+          <td>35 km/h</td>
+          <td>31 km/h</td>
+          <td>22 km/h (LOS E)</td>
+          <td><span class="badge badge-amber">&darr; CONGESTION SURGE</span></td>
+        </tr>
+        <tr>
+          <td><strong>Domlur Flyover</strong></td>
+          <td>48 km/h (LOS B)</td>
+          <td>46 km/h</td>
+          <td>44 km/h</td>
+          <td>42 km/h (LOS C)</td>
+          <td><span class="badge badge-green">&rarr; STABLE FLOW</span></td>
+        </tr>
+        <tr>
+          <td><strong>Silk Board Corridor</strong></td>
+          <td>18 km/h (LOS E)</td>
+          <td>14 km/h</td>
+          <td>11 km/h</td>
+          <td>9 km/h (LOS F)</td>
+          <td><span class="badge badge-alert" style="background:#FEE2E2; color:#B91C1C;">&darr; CRITICAL BOTTLENECK</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="page-footer">
+    <div>CIPHER Web & AI Solutions · UrbanTwin AI Project Proposal</div>
+    <div class="page-num">Page 6 of 12</div>
+  </div>
+</div>
+
+<!-- ================= PAGE 7 ================= -->
+<div class="page">
+  <div class="page-header">
+    <div class="brand" style="display: flex; align-items: center; gap: 6px;">
+        <svg viewBox="0 0 100 100" width="13" height="13" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink: 0; vertical-align: middle;">
+        <!-- 3x3 Matrix C Mark (on-light: 7 ink cells, 1 hollow cell, 1 copper cell) -->
+        <rect x="3" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="71" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="3" y="37" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="37" width="26" height="26" rx="6" fill="#FFFFFF" stroke="#94A3B8" stroke-width="3"/>
+        <rect x="71" y="37" width="26" height="26" rx="6" fill="#E0A45C"/>
+        <rect x="3" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="71" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+      </svg>
+        <span>CIPHER</span> · URBANTWIN AI
+      </div>
+    <div>SECTION 06: DIGITAL TWIN SIMULATION & 3D UI</div>
+  </div>
+  <div class="page-content">
+    <h2 class="section-title"><span class="sec-num">14</span> Module 11: Digital Twin "What-If" Scenario Simulation Engine</h2>
+    <p class="lead">
+      The "What-If" Simulation Engine is UrbanTwin AI's most impactful decision-support capability. City administrators can simulate policy interventions in a virtual copy of the city graph before committing changes to the real world.
+    </p>
+
+    <div class="grid-3">
+      <div class="card">
+        <h3 class="subsection-title" style="color: #2563EB;">1. Road Closure Modeling</h3>
+        <p>Simulates complete or partial closures of key arteries (e.g. metro construction, VIP convoy, accidents) and computes spillover congestion across adjacent corridors.</p>
+      </div>
+      <div class="card">
+        <h3 class="subsection-title" style="color: #2563EB;">2. Volume Surge Stress-Testing</h3>
+        <p>Injects +10% to +50% traffic volume shocks (e.g. stadium match exit, holiday rush) to determine network collapse thresholds and queue buildup rates.</p>
+      </div>
+      <div class="card">
+        <h3 class="subsection-title" style="color: #2563EB;">3. Signal Timing Optimization</h3>
+        <p>Simulates dynamic "green wave" phase re-allocations (+10s to +30s green time), measuring instantaneous reduction in commuter transit delays.</p>
+      </div>
+    </div>
+
+    <div class="card card-highlight" style="margin-top: 4px;">
+      <h3 class="subsection-title">Automated Before-vs-After Scenario Impact Diff</h3>
+      <p style="font-size: 7.5pt;">The simulation engine outputs clear, accountable quantitative metrics for city council and planning approvals:</p>
+      <div class="grid-4" style="margin-top: 4px; text-align: center;">
+        <div style="background:#FFF; padding:6px; border-radius:4px; border:1px solid #CBD5E1;">
+          <div style="font-size: 6.5pt; color:#64748B;">CONGESTION DELTA</div>
+          <div style="font-size: 11pt; font-weight:800; color:#10B981;">-18.4%</div>
+          <div style="font-size: 6.5pt; color:#10B981;">Significant Relief</div>
+        </div>
+        <div style="background:#FFF; padding:6px; border-radius:4px; border:1px solid #CBD5E1;">
+          <div style="font-size: 6.5pt; color:#64748B;">CORRIDOR SPEED</div>
+          <div style="font-size: 11pt; font-weight:800; color:#2563EB;">+6.8 km/h</div>
+          <div style="font-size: 6.5pt; color:#2563EB;">Speed Enhancement</div>
+        </div>
+        <div style="background:#FFF; padding:6px; border-radius:4px; border:1px solid #CBD5E1;">
+          <div style="font-size: 6.5pt; color:#64748B;">COMMUTE DELAY</div>
+          <div style="font-size: 11pt; font-weight:800; color:#10B981;">-4.2 min</div>
+          <div style="font-size: 6.5pt; color:#10B981;">Time Saved / Vehicle</div>
+        </div>
+        <div style="background:#FFF; padding:6px; border-radius:4px; border:1px solid #CBD5E1;">
+          <div style="font-size: 6.5pt; color:#64748B;">SCENARIO VERDICT</div>
+          <div style="font-size: 11pt; font-weight:800; color:#10B981;">APPROVED</div>
+          <div style="font-size: 6.5pt; color:#10B981;">High Flow Benefit</div>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="section-title" style="margin-top: 6px;"><span class="sec-num">15</span> Module 12: Centralized 3D Cyber-Command-Center Dashboard</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3 class="subsection-title">1. Three.js 3D WebGL Digital Twin</h3>
+        <p>Interactive hardware-accelerated 3D viewport of the city's road network, displaying elevated spatial corridor tubes with colored particle density and glowing vehicle trajectory splines.</p>
+      </div>
+      <div class="card">
+        <h3 class="subsection-title">2. Leaflet 2D GIS &amp; Chart.js Telemetry</h3>
+        <p>High-resolution geospatial map showing real-time camera pins, route polylines, and live KPI telemetry graphs (Hourly VPH, Congestion Index %, Speed Distributions).</p>
+      </div>
+    </div>
+
+    <h2 class="section-title" style="margin-top: 6px;"><span class="sec-num">16</span> Module 13: Google Colab Personalized Deep Learning Training Suite</h2>
+    <p>
+      A key deliverable is the self-contained Google Colab interactive notebook (`UrbanTwin_AI_Personalized_Model_Colab.ipynb`). It bridges ML research and live production with a 1-click cloud pipeline:
+    </p>
+    <ul class="bullet-list" style="margin-top: 2px;">
+      <li><strong>Procedural Demo Dataset Generator:</strong> Synthesizes thousands of high-fidelity license plates with authentic Indian state codes, typography, IND holograms, and weather/noise artifacts.</li>
+      <li><strong>PyTorch CTC Training Loop:</strong> Implements AdamW optimizer, Cosine Annealing learning rate schedule, and automated loss curve plotting.</li>
+      <li><strong>Auto-Export to Live Backend:</strong> Generates `.pth` weights that are auto-detected by `inference.py` to power live edge recognition without restarting services.</li>
+    </ul>
+  </div>
+  <div class="page-footer">
+    <div>CIPHER Web & AI Solutions · UrbanTwin AI Project Proposal</div>
+    <div class="page-num">Page 7 of 12</div>
+  </div>
+</div>
+
+<!-- ================= PAGE 8 ================= -->
+<div class="page">
+  <div class="page-header">
+    <div class="brand" style="display: flex; align-items: center; gap: 6px;">
+        <svg viewBox="0 0 100 100" width="13" height="13" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink: 0; vertical-align: middle;">
+        <!-- 3x3 Matrix C Mark (on-light: 7 ink cells, 1 hollow cell, 1 copper cell) -->
+        <rect x="3" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="71" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="3" y="37" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="37" width="26" height="26" rx="6" fill="#FFFFFF" stroke="#94A3B8" stroke-width="3"/>
+        <rect x="71" y="37" width="26" height="26" rx="6" fill="#E0A45C"/>
+        <rect x="3" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="71" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+      </svg>
+        <span>CIPHER</span> · URBANTWIN AI
+      </div>
+    <div>SECTION 07: TECH STACK & DATABASE SCHEMA</div>
+  </div>
+  <div class="page-content">
+    <h2 class="section-title"><span class="sec-num">17</span> Comprehensive Technology Stack Matrix</h2>
+    <table class="doc-table">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Technology</th>
+          <th>Version</th>
+          <th>Implementation Role</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Backend Core</strong></td>
+          <td>Python</td>
+          <td>3.10+ / 3.12</td>
+          <td>High-throughput business logic, math calculations, and model inference.</td>
+        </tr>
+        <tr>
+          <td><strong>API Framework</strong></td>
+          <td>FastAPI</td>
+          <td>&ge; 0.104.0</td>
+          <td>Asynchronous ASGI web framework with sub-millisecond route response.</td>
+        </tr>
+        <tr>
+          <td><strong>ASGI Server</strong></td>
+          <td>Uvicorn</td>
+          <td>&ge; 0.24.0</td>
+          <td>High-concurrency async HTTP server for low-latency streaming.</td>
+        </tr>
+        <tr>
+          <td><strong>Deep Learning</strong></td>
+          <td>PyTorch (`torch`)</td>
+          <td>&ge; 2.0.0</td>
+          <td>Spatial Transformer Network, VGG feature extractor, BiLSTM, and `CTCLoss`.</td>
+        </tr>
+        <tr>
+          <td><strong>ML Forecasting</strong></td>
+          <td>XGBoost</td>
+          <td>&ge; 2.0.0</td>
+          <td>Gradient-boosted decision trees for multi-horizon traffic forecasting.</td>
+        </tr>
+        <tr>
+          <td><strong>Spatial Math</strong></td>
+          <td>Pandas &amp; NumPy</td>
+          <td>&ge; 2.0.0</td>
+          <td>Trajectory coordinate transformation, matrix calculus, and telemetry analytics.</td>
+        </tr>
+        <tr>
+          <td><strong>Computer Vision</strong></td>
+          <td>Pillow &amp; OpenCV</td>
+          <td>&ge; 10.0.0</td>
+          <td>Synthetic plate generation, affine warping, motion blur, and glare injection.</td>
+        </tr>
+        <tr>
+          <td><strong>Security &amp; Auth</strong></td>
+          <td>Python-Jose &amp; Passlib</td>
+          <td>&ge; 3.3.0</td>
+          <td>Cryptographic JWT token generation, verification, and bcrypt password hashing.</td>
+        </tr>
+        <tr>
+          <td><strong>Rate Limiting</strong></td>
+          <td>SlowAPI</td>
+          <td>&ge; 0.1.9</td>
+          <td>Token bucket &amp; sliding window rate limiter against endpoint abuse.</td>
+        </tr>
+        <tr>
+          <td><strong>3D WebGL UI</strong></td>
+          <td>Three.js</td>
+          <td>r128</td>
+          <td>3D digital twin rendering of city corridors, camera nodes, and trajectory tubes.</td>
+        </tr>
+        <tr>
+          <td><strong>GIS Mapping</strong></td>
+          <td>Leaflet GIS</td>
+          <td>1.9.4</td>
+          <td>Interactive satellite &amp; street 2D maps with vehicle trajectory polylines.</td>
+        </tr>
+        <tr>
+          <td><strong>Telemetry UI</strong></td>
+          <td>Chart.js</td>
+          <td>4.4.0</td>
+          <td>Real-time interactive speed, VPH flow rate, and forecast curves.</td>
+        </tr>
+        <tr>
+          <td><strong>Containerization</strong></td>
+          <td>Docker &amp; Compose</td>
+          <td>Multi-stage</td>
+          <td>Hardened container runtime with non-root security privileges (`appuser:1001`).</td>
+        </tr>
+        <tr>
+          <td><strong>Cloud Deployment</strong></td>
+          <td>Render YAML</td>
+          <td>Native</td>
+          <td>Infrastructure-as-code automated cloud hosting configuration.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 class="section-title" style="margin-top: 6px;"><span class="sec-num">18</span> Relational Database Schema & Data Models</h2>
+    <p style="font-size: 7.5pt; color: #64748B;">Enterprise PostgreSQL + PostGIS schema designed for billions of spatial-temporal edge detections:</p>
+    <table class="doc-table">
+      <thead>
+        <tr>
+          <th>Entity Table</th>
+          <th>Primary Attributes</th>
+          <th>Foreign Keys / Indexes</th>
+          <th>Functional Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="code">cameras</td>
+          <td>camera_id, name, lat, lng, road_id, status, fps, health</td>
+          <td>road_id &rarr; roads</td>
+          <td>Edge camera sensor registry and live operational health.</td>
+        </tr>
+        <tr>
+          <td class="code">vehicles</td>
+          <td>vehicle_id, vehicle_type, first_seen, last_seen, active</td>
+          <td>Indexed on first_seen</td>
+          <td>Global vehicle identity entities across all camera zones.</td>
+        </tr>
+        <tr>
+          <td class="code">plate_hashes</td>
+          <td>hash_id, vehicle_id, plate_hash, masked_text, conf</td>
+          <td>vehicle_id &rarr; vehicles</td>
+          <td>Privacy-preserving salted SHA-256 license plate records.</td>
+        </tr>
+        <tr>
+          <td class="code">trajectories</td>
+          <td>traj_id, vehicle_id, camera_id, timestamp, lat, lng, speed</td>
+          <td>camera_id &rarr; cameras</td>
+          <td>Ordered spatial-temporal waypoints of traversed road corridors.</td>
+        </tr>
+        <tr>
+          <td class="code">roads</td>
+          <td>road_id, name, start_node, end_node, length_km, speed_limit</td>
+          <td>start/end node FK</td>
+          <td>Topological directed graph road network edges.</td>
+        </tr>
+        <tr>
+          <td class="code">traffic_metrics</td>
+          <td>metric_id, road_id, timestamp, vph, avg_speed, density, los</td>
+          <td>road_id &rarr; roads</td>
+          <td>Aggregated macroscopic corridor telemetry and HCM LOS tiers.</td>
+        </tr>
+        <tr>
+          <td class="code">predictions</td>
+          <td>pred_id, road_id, timestamp, horizon_min, pred_cong, pred_speed</td>
+          <td>Composite (road, horizon)</td>
+          <td>Multi-horizon XGBoost traffic predictions with confidence intervals.</td>
+        </tr>
+        <tr>
+          <td class="code">anomalies</td>
+          <td>alert_id, camera_id, road_id, anomaly_type, severity, score</td>
+          <td>Indexed on timestamp</td>
+          <td>Active incident alerts (ghost vehicles, speed drops, loitering).</td>
+        </tr>
+        <tr>
+          <td class="code">hotlist_alerts</td>
+          <td>alert_id, plate_hash, warrant_ref, intercept_cam, intercept_eta</td>
+          <td>plate_hash indexed</td>
+          <td>Law enforcement intercept alerts with downstream countdown ETA.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="page-footer">
+    <div>CIPHER Web & AI Solutions · UrbanTwin AI Project Proposal</div>
+    <div class="page-num">Page 8 of 12</div>
+  </div>
+</div>
+
+<!-- ================= PAGE 9 ================= -->
+<div class="page">
+  <div class="page-header">
+    <div class="brand" style="display: flex; align-items: center; gap: 6px;">
+        <svg viewBox="0 0 100 100" width="13" height="13" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink: 0; vertical-align: middle;">
+        <!-- 3x3 Matrix C Mark (on-light: 7 ink cells, 1 hollow cell, 1 copper cell) -->
+        <rect x="3" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="71" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="3" y="37" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="37" width="26" height="26" rx="6" fill="#FFFFFF" stroke="#94A3B8" stroke-width="3"/>
+        <rect x="71" y="37" width="26" height="26" rx="6" fill="#E0A45C"/>
+        <rect x="3" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="71" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+      </svg>
+        <span>CIPHER</span> · URBANTWIN AI
+      </div>
+    <div>SECTION 08: REST API & SYSTEM HARDENING</div>
+  </div>
+  <div class="page-content">
+    <h2 class="section-title"><span class="sec-num">19</span> Full REST API Surface & OpenAPI Specifications</h2>
+    <table class="doc-table">
+      <thead>
+        <tr>
+          <th>Endpoint Route</th>
+          <th>Verb</th>
+          <th>Category</th>
+          <th>Payload & Response Summary</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="code">/health</td>
+          <td><span class="badge badge-green">GET</span></td>
+          <td>System</td>
+          <td>Returns system uptime, CPU/memory telemetry, and server timestamp.</td>
+        </tr>
+        <tr>
+          <td class="code">/api/v1/auth/login</td>
+          <td><span class="badge badge-blue">POST</span></td>
+          <td>Security</td>
+          <td>Authenticates operator credentials and issues cryptographic JWT Bearer token.</td>
+        </tr>
+        <tr>
+          <td class="code">/api/v1/cameras</td>
+          <td><span class="badge badge-green">GET</span></td>
+          <td>Edge</td>
+          <td>Lists all camera nodes, coordinates, optical health, frame rate, and status.</td>
+        </tr>
+        <tr>
+          <td class="code">/api/v1/cameras/{id}/process</td>
+          <td><span class="badge badge-blue">POST</span></td>
+          <td>Edge</td>
+          <td>Ingests camera frame; runs STN-CRNN OCR, vehicle classification &amp; tracking.</td>
+        </tr>
+        <tr>
+          <td class="code">/api/v1/roads</td>
+          <td><span class="badge badge-green">GET</span></td>
+          <td>Graph</td>
+          <td>Returns all road corridors with topology, geometry, length, and speed limits.</td>
+        </tr>
+        <tr>
+          <td class="code">/api/v1/roads/{id}/analytics</td>
+          <td><span class="badge badge-green">GET</span></td>
+          <td>Graph</td>
+          <td>Returns live corridor telemetry: density, queue length, speed, and LOS tier.</td>
+        </tr>
+        <tr>
+          <td class="code">/api/v1/vehicles</td>
+          <td><span class="badge badge-green">GET</span></td>
+          <td>Tracking</td>
+          <td>Queries detected vehicle records, filterable by date range or vehicle type.</td>
+        </tr>
+        <tr>
+          <td class="code">/api/v1/vehicles/matches</td>
+          <td><span class="badge badge-green">GET</span></td>
+          <td>ReID</td>
+          <td>Returns cross-camera matched vehicle trajectories and score breakdowns.</td>
+        </tr>
+        <tr>
+          <td class="code">/api/v1/traffic/macro-overview</td>
+          <td><span class="badge badge-green">GET</span></td>
+          <td>Macro</td>
+          <td>City-wide summary: total active cameras, city average speed, and OD matrix.</td>
+        </tr>
+        <tr>
+          <td class="code">/api/v1/traffic/anpr-test</td>
+          <td><span class="badge badge-blue">POST</span></td>
+          <td>Testing</td>
+          <td>Degradation testing studio: evaluates rain, glare, blur, mud, and skew with SVG preview.</td>
+        </tr>
+        <tr>
+          <td class="code">/api/v1/predictions</td>
+          <td><span class="badge badge-green">GET</span></td>
+          <td>ML Forecast</td>
+          <td>Returns multi-horizon forecasts (5m, 15m, 30m) with statistical error bounds.</td>
+        </tr>
+        <tr>
+          <td class="code">/api/v1/anomalies</td>
+          <td><span class="badge badge-green">GET</span></td>
+          <td>Incident</td>
+          <td>Active anomalies: speed drops (&gt;30 km/h), stationary stalls, and ghost vehicles.</td>
+        </tr>
+        <tr>
+          <td class="code">/api/v1/anomalies/hotlist</td>
+          <td><span class="badge badge-green">GET</span></td>
+          <td>Police</td>
+          <td>Active hotlist warrants with next predicted checkpoint and intercept countdown ETA.</td>
+        </tr>
+        <tr>
+          <td class="code">/api/v1/simulation/what-if</td>
+          <td><span class="badge badge-blue">POST</span></td>
+          <td>Digital Twin</td>
+          <td>Evaluates scenario interventions: road closures, volume surges, and signal timings.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 class="section-title" style="margin-top: 6px;"><span class="sec-num">20</span> Security Architecture & Production Hardening</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3 class="subsection-title">1. Cryptographic Authentication & Rate Defense</h3>
+        <p><strong>JWT Bearer Tokens:</strong> Secure token signing with HS256 algorithm and timed expiration.<br>
+        <strong>Bcrypt Salting:</strong> Operator passwords encrypted with passlib bcrypt.<br>
+        <strong>SlowAPI DDoS Defense:</strong> Sensitive endpoints throttled to 60–120 requests/minute per IP.</p>
+      </div>
+      <div class="card">
+        <h3 class="subsection-title">2. Enterprise Middleware & Container Hardening</h3>
+        <p><strong>Security Headers:</strong> Strict Content-Security-Policy (CSP), HTTP Strict Transport Security (HSTS), X-Content-Type-Options (`nosniff`), X-Frame-Options (`SAMEORIGIN`).<br>
+        <strong>Non-Root Docker Execution:</strong> Container runs as unprivileged user `appuser:1001` to eliminate host breakout vectors.</p>
+      </div>
+    </div>
+
+    <div class="code-block" style="margin-top: 4px;">
+      <span class="cmt"># Production Security Headers Middleware (FastAPI)</span><br>
+      <span class="kwd">response.headers</span>[<span class="str">"Strict-Transport-Security"</span>] = <span class="str">"max-age=31536000; includeSubDomains; preload"</span><br>
+      <span class="kwd">response.headers</span>[<span class="str">"X-Content-Type-Options"</span>] = <span class="str">"nosniff"</span><br>
+      <span class="kwd">response.headers</span>[<span class="str">"X-Frame-Options"</span>] = <span class="str">"SAMEORIGIN"</span><br>
+      <span class="kwd">response.headers</span>[<span class="str">"Content-Security-Policy"</span>] = <span class="str">"default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com;"</span>
+    </div>
+  </div>
+  <div class="page-footer">
+    <div>CIPHER Web & AI Solutions · UrbanTwin AI Project Proposal</div>
+    <div class="page-num">Page 9 of 12</div>
+  </div>
+</div>
+
+<!-- ================= PAGE 10 ================= -->
+<div class="page">
+  <div class="page-header">
+    <div class="brand" style="display: flex; align-items: center; gap: 6px;">
+        <svg viewBox="0 0 100 100" width="13" height="13" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink: 0; vertical-align: middle;">
+        <!-- 3x3 Matrix C Mark (on-light: 7 ink cells, 1 hollow cell, 1 copper cell) -->
+        <rect x="3" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="71" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="3" y="37" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="37" width="26" height="26" rx="6" fill="#FFFFFF" stroke="#94A3B8" stroke-width="3"/>
+        <rect x="71" y="37" width="26" height="26" rx="6" fill="#E0A45C"/>
+        <rect x="3" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="71" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+      </svg>
+        <span>CIPHER</span> · URBANTWIN AI
+      </div>
+    <div>SECTION 09: BENCHMARKING & EVALUATION MATRIX</div>
+  </div>
+  <div class="page-content">
+    <h2 class="section-title"><span class="sec-num">21</span> Empirical Evaluation & Benchmark SLA Verification</h2>
+    <p class="lead">
+      In enterprise deployments, unsupported claims such as "99% accurate" undermine engineering credibility. UrbanTwin AI validates each critical subsystem against quantitative, measurable empirical targets:
+    </p>
+
+    <table class="doc-table" style="margin: 4px 0;">
+      <thead>
+        <tr>
+          <th>Subsystem</th>
+          <th>Key Benchmark Metric</th>
+          <th>Industry Baseline</th>
+          <th>UrbanTwin AI Achieved</th>
+          <th>SLA Compliance</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Vehicle Detection</strong></td>
+          <td>mAP @ 0.5 IoU (COCO Vehicle Classes)</td>
+          <td>74.2%</td>
+          <td><strong>88.7%</strong></td>
+          <td><span class="badge badge-green">PASSED</span></td>
+        </tr>
+        <tr>
+          <td><strong>Multi-Object Tracking</strong></td>
+          <td>MOTA (Multiple Object Tracking Accuracy)</td>
+          <td>68.1%</td>
+          <td><strong>79.4%</strong></td>
+          <td><span class="badge badge-green">PASSED</span></td>
+        </tr>
+        <tr>
+          <td><strong>Tracking ID Consistency</strong></td>
+          <td>IDF1 (Identification F1 Score)</td>
+          <td>71.0%</td>
+          <td><strong>82.6%</strong></td>
+          <td><span class="badge badge-green">PASSED</span></td>
+        </tr>
+        <tr>
+          <td><strong>ANPR Clean Baseline</strong></td>
+          <td>Full Plate Character Recognition Accuracy</td>
+          <td>88.0%</td>
+          <td><strong>98.6%</strong></td>
+          <td><span class="badge badge-green">SURPASSED</span></td>
+        </tr>
+        <tr>
+          <td><strong>ANPR Severe Weather</strong></td>
+          <td>Monsoon Rain &amp; Night Glare Accuracy</td>
+          <td>57.1%</td>
+          <td><strong>93.0%</strong></td>
+          <td><span class="badge badge-green">&gt;90% SLA MET</span></td>
+        </tr>
+        <tr>
+          <td><strong>Cross-Camera ReID</strong></td>
+          <td>Multi-Factor Matching Precision / Recall</td>
+          <td>72.5%</td>
+          <td><strong>91.2%</strong></td>
+          <td><span class="badge badge-green">PASSED</span></td>
+        </tr>
+        <tr>
+          <td><strong>Congestion Forecast (5m)</strong></td>
+          <td>Mean Absolute Error (MAE)</td>
+          <td>4.8%</td>
+          <td><strong>1.82%</strong></td>
+          <td><span class="badge badge-green">PASSED</span></td>
+        </tr>
+        <tr>
+          <td><strong>Congestion Forecast (15m)</strong></td>
+          <td>Root Mean Square Error (RMSE)</td>
+          <td>6.5%</td>
+          <td><strong>2.74%</strong></td>
+          <td><span class="badge badge-green">PASSED</span></td>
+        </tr>
+        <tr>
+          <td><strong>Congestion Forecast (30m)</strong></td>
+          <td>Mean Absolute Error (MAE)</td>
+          <td>7.9%</td>
+          <td><strong>3.15%</strong></td>
+          <td><span class="badge badge-green">PASSED</span></td>
+        </tr>
+        <tr>
+          <td><strong>Inference Latency (GPU)</strong></td>
+          <td>Full Frame OCR &amp; Tracking Pipeline</td>
+          <td>120 ms</td>
+          <td><strong>52 ms</strong></td>
+          <td><span class="badge badge-green">SUB-SECOND</span></td>
+        </tr>
+        <tr>
+          <td><strong>Inference Latency (CPU)</strong></td>
+          <td>Quantized ONNX / PyTorch CPU Execution</td>
+          <td>350 ms</td>
+          <td><strong>114 ms</strong></td>
+          <td><span class="badge badge-green">PASSED</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 class="section-title" style="margin-top: 6px;"><span class="sec-num">22</span> Dataset Strategy & Synthetic Scenario Injection</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3 class="subsection-title">1. Public & Pre-recorded Video Streams</h3>
+        <p>Utilizes calibrated video sequences representing diverse intersection topologies, high-speed arterials, and dense commercial corridors (e.g. MG Road, Trinity Junction, Domlur, Silk Board) to test real-world tracking without requiring immediate hardware installation.</p>
+      </div>
+      <div class="card">
+        <h3 class="subsection-title">2. Procedural Synthetic Data Generator</h3>
+        <p>The integrated Google Colab generator synthesizes thousands of photorealistic license plates with controlled degradation kernels (motion blur convolutions, glare halos, water droplet artifacts, mud splatters), guaranteeing continuous model retraining without privacy violations.</p>
+      </div>
+    </div>
+
+    <div class="card card-bordered" style="margin-top: 4px;">
+      <h3 class="subsection-title">Edge Device Resource Footprint</h3>
+      <p>
+        The inference pipeline is optimized for edge AI accelerators (NVIDIA Jetson Orin / Xavier / Intel NUC). Memory footprint is capped at &lt;1.8 GB VRAM on GPU and &lt;950 MB RAM on CPU, enabling edge deployment directly inside roadside camera enclosures.
+      </p>
+    </div>
+  </div>
+  <div class="page-footer">
+    <div>CIPHER Web & AI Solutions · UrbanTwin AI Project Proposal</div>
+    <div class="page-num">Page 10 of 12</div>
+  </div>
+</div>
+
+<!-- ================= PAGE 11 ================= -->
+<div class="page">
+  <div class="page-header">
+    <div class="brand" style="display: flex; align-items: center; gap: 6px;">
+        <svg viewBox="0 0 100 100" width="13" height="13" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink: 0; vertical-align: middle;">
+        <!-- 3x3 Matrix C Mark (on-light: 7 ink cells, 1 hollow cell, 1 copper cell) -->
+        <rect x="3" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="71" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="3" y="37" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="37" width="26" height="26" rx="6" fill="#FFFFFF" stroke="#94A3B8" stroke-width="3"/>
+        <rect x="71" y="37" width="26" height="26" rx="6" fill="#E0A45C"/>
+        <rect x="3" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="71" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+      </svg>
+        <span>CIPHER</span> · URBANTWIN AI
+      </div>
+    <div>SECTION 10: ROADMAP & SYSTEM DESIGN BLUEPRINT</div>
+  </div>
+  <div class="page-content">
+    <h2 class="section-title"><span class="sec-num">23</span> Phased Implementation Roadmap</h2>
+    <table class="doc-table">
+      <thead>
+        <tr>
+          <th>Phase</th>
+          <th>Workstream</th>
+          <th>Key Deliverables</th>
+          <th>Milestone Verification</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Phase 1</strong></td>
+          <td>Camera &amp; Vision Ingestion</td>
+          <td>Video stream ingestion, YOLOv8 detector, and ByteTrack tracklet pipeline.</td>
+          <td>Stable bounding boxes &amp; continuous track IDs.</td>
+        </tr>
+        <tr>
+          <td><strong>Phase 2</strong></td>
+          <td>STN-CRNN ANPR OCR</td>
+          <td>Spatial Transformer homography, BiLSTM sequence model, CTC loss.</td>
+          <td>&gt;90% accuracy across 6 degradation states.</td>
+        </tr>
+        <tr>
+          <td><strong>Phase 3</strong></td>
+          <td>Privacy &amp; Cross-Camera ReID</td>
+          <td>Salted SHA-256 hashing, multi-factor trajectory engine, speed violation flag.</td>
+          <td>GDPR audit compliance &amp; trajectory routes.</td>
+        </tr>
+        <tr>
+          <td><strong>Phase 4</strong></td>
+          <td>Macroscopic Analytics &amp; Graph</td>
+          <td>Directed graph topology, HCM Level of Service (A–F), and OD matrix.</td>
+          <td>Automated corridor queue &amp; transit calculation.</td>
+        </tr>
+        <tr>
+          <td><strong>Phase 5</strong></td>
+          <td>Predictive ML &amp; Anomaly Radar</td>
+          <td>XGBoost multi-horizon models (5m/15m/30m), ghost vehicle &amp; hotlist alerts.</td>
+          <td>Real-time anomaly dispatch &amp; forecast curves.</td>
+        </tr>
+        <tr>
+          <td><strong>Phase 6</strong></td>
+          <td>Digital Twin Simulation</td>
+          <td>"What-If" intervention simulator (lane closures, surges, green wave tuning).</td>
+          <td>Automated before-after delta diff generation.</td>
+        </tr>
+        <tr>
+          <td><strong>Phase 7</strong></td>
+          <td>3D Command Center UI</td>
+          <td>Three.js WebGL canvas, Leaflet 2D GIS map, glassmorphism telemetry UI.</td>
+          <td>Responsive 60 FPS interactive dashboard.</td>
+        </tr>
+        <tr>
+          <td><strong>Phase 8</strong></td>
+          <td>Hardening &amp; Cloud Deployment</td>
+          <td>JWT Bearer, SlowAPI rate limiting, non-root Docker runtime, Render YAML.</td>
+          <td>Zero-vulnerability automated cloud hosting.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 class="section-title" style="margin-top: 6px;"><span class="sec-num">24</span> Enterprise Scale-Out & System Design Architecture</h2>
+    <p style="font-size: 7.5pt; color: #64748B;">Architectural blueprint for scaling UrbanTwin AI from an 8-camera pilot to a 10,000+ camera smart city network:</p>
+    <div class="grid-2">
+      <div class="card">
+        <h3 class="subsection-title" style="color: #2563EB;">1. Distributed Event Streaming (Kafka / Redis)</h3>
+        <p>Decouples edge computer vision ingestors from backend analytics. Kafka partition topics keyed by `camera_id` ensure linear horizontal scale-out across distributed Kubernetes worker pods.</p>
+      </div>
+      <div class="card">
+        <h3 class="subsection-title" style="color: #2563EB;">2. Geospatial Sharding (PostGIS)</h3>
+        <p>Database queries partitioned by geographic city quadrants (e.g. North, South, East, West). Spatial R-Tree indexes ensure sub-millisecond nearest-camera neighbor queries across millions of records.</p>
+      </div>
+      <div class="card">
+        <h3 class="subsection-title" style="color: #2563EB;">3. Spatio-Temporal Graph Neural Networks (GNN)</h3>
+        <p>Evolutionary horizon: Replace gradient-boosted trees with Graph Convolutional Recurrent Networks (T-GCN / A3T-GCN) to model complex inter-arterial traffic diffusion dynamics across the entire city.</p>
+      </div>
+      <div class="card">
+        <h3 class="subsection-title" style="color: #2563EB;">4. Automated Drift Detection & MLOps</h3>
+        <p>Continuous telemetry tracking of character confidence degradation and prediction error drift (Kolmogorov-Smirnov test), triggering automated Colab retraining pipelines when metrics slip.</p>
+      </div>
+    </div>
+
+    <div class="card card-bordered" style="margin-top: 4px;">
+      <h3 class="subsection-title">Technical Interview & Peer Review Highlights</h3>
+      <p style="font-size: 7.5pt;">
+        <strong>CV Decision:</strong> ByteTrack over SORT (maintains tracks through occlusion by associating low-score detections).<br>
+        <strong>ML Decision:</strong> XGBoost + BiLSTM ensemble over static ARIMA (captures non-linear spatial-temporal cross-junction interactions).<br>
+        <strong>Backend Decision:</strong> FastAPI over Django (native asynchronous ASGI event loop critical for live telemetry concurrency).
+      </p>
+    </div>
+  </div>
+  <div class="page-footer">
+    <div>CIPHER Web & AI Solutions · UrbanTwin AI Project Proposal</div>
+    <div class="page-num">Page 11 of 12</div>
+  </div>
+</div>
+
+<!-- ================= PAGE 12 ================= -->
+<div class="page">
+  <div class="page-header">
+    <div class="brand" style="display: flex; align-items: center; gap: 6px;">
+        <svg viewBox="0 0 100 100" width="13" height="13" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink: 0; vertical-align: middle;">
+        <!-- 3x3 Matrix C Mark (on-light: 7 ink cells, 1 hollow cell, 1 copper cell) -->
+        <rect x="3" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="71" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="3" y="37" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="37" width="26" height="26" rx="6" fill="#FFFFFF" stroke="#94A3B8" stroke-width="3"/>
+        <rect x="71" y="37" width="26" height="26" rx="6" fill="#E0A45C"/>
+        <rect x="3" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="37" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+        <rect x="71" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+      </svg>
+        <span>CIPHER</span> · URBANTWIN AI
+      </div>
+    <div>SECTION 11: GOVERNANCE, IP & FORMAL SIGN-OFF</div>
+  </div>
+  <div class="page-content">
+    <h2 class="section-title"><span class="sec-num">25</span> Project Governance, Commercial Scope & IP Ownership</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3 class="subsection-title">1. Intellectual Property & Code Ownership</h3>
+        <p>Upon final project acceptance and milestone sign-off, full intellectual property rights, source code repositories, trained PyTorch weight checkpoints, and Docker infrastructure configurations transfer completely to the client.</p>
+      </div>
+      <div class="card">
+        <h3 class="subsection-title">2. Warranty & Ongoing Maintenance</h3>
+        <p>Includes a standard 30-day post-launch warranty covering bug rectification and deployment stabilization. Optional monthly maintenance retainers cover model drift monitoring, dependency updates, and camera expansion.</p>
+      </div>
+    </div>
+
+    <div class="card card-highlight" style="margin-top: 4px;">
+      <h3 class="subsection-title">Commercial Investment & Deliverables Summary</h3>
+      <p style="font-size: 7.5pt; margin-bottom: 4px;">Standard project delivery package includes:</p>
+      <ul class="bullet-list">
+        <li><strong>Full Source Code Repository:</strong> Clean, PEP8-compliant FastAPI backend with unit tests and Dockerfile.</li>
+        <li><strong>Trained Deep Learning Weights:</strong> Pre-trained STN-CRNN OCR model (`.pth`) and XGBoost traffic predictor.</li>
+        <li><strong>Google Colab Training Studio:</strong> Interactive, 1-click cloud retraining pipeline with procedural dataset generator.</li>
+        <li><strong>3D Cyber Command Center Dashboard:</strong> Complete Three.js WebGL, Leaflet GIS, and glassmorphism interface.</li>
+        <li><strong>Documentation & API Blueprint:</strong> Full OpenAPI schema, deployment guide, and administrative manual.</li>
+      </ul>
+    </div>
+
+    <div class="card card-alert" style="margin-top: 4px;">
+      <h3 class="subsection-title" style="color: #B91C1C;">Compliance & Ethical AI Usage Disclosure</h3>
+      <p style="font-size: 7.2pt; line-height: 1.4;">
+        UrbanTwin AI is designed exclusively for municipal traffic congestion relief, smart city optimization, and lawful security oversight. The platform strictly enforces salted SHA-256 one-way cryptographic hashing of vehicle license plates, visual plate masking in operator user interfaces, and automated data retention purging schedules to comply with GDPR, CCPA, and national privacy mandates.
+      </p>
+    </div>
+
+    <div style="margin-top: 10px; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 10px 14px; background: #F8FAFC;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+        <div>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+          <svg viewBox="0 0 100 100" width="30" height="30" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink: 0;">
+            <rect x="3" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+            <rect x="37" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+            <rect x="71" y="3" width="26" height="26" rx="6" fill="#0F1013"/>
+            <rect x="3" y="37" width="26" height="26" rx="6" fill="#0F1013"/>
+            <rect x="37" y="37" width="26" height="26" rx="6" fill="#FFFFFF" stroke="#94A3B8" stroke-width="3"/>
+            <rect x="71" y="37" width="26" height="26" rx="6" fill="#E0A45C"/>
+            <rect x="3" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+            <rect x="37" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+            <rect x="71" y="71" width="26" height="26" rx="6" fill="#0F1013"/>
+          </svg>
+          <div>
+            <div style="font-family: 'Space Grotesk', sans-serif; font-size: 12pt; font-weight: 800; color: #0F172A; letter-spacing: 0.08em; line-height: 1;">
+              CIPHER
+            </div>
+            <div style="font-size: 7.2pt; font-weight: 600; color: #E0A45C; margin-top: 2px;">
+              Decode. Build. Evolve.
+            </div>
+          </div>
+        </div>
+        <div style="font-size: 7.5pt; color: #334155;">
+          <strong>Lead Architect:</strong> Aniket Nandi<br>
+          <strong>Role:</strong> Lead Full-Stack AI Engineer &amp; Designer<br>
+          <strong>Headquarters:</strong> Kolkata, West Bengal, India (IST)<br>
+          <strong>Agency Domain:</strong> Web Design, AI Engineering &amp; SaaS Systems
+        </div>
+        </div>
+        <div style="text-align: right;">
+          <div style="display: inline-block; border: 2px solid #2563EB; border-radius: 4px; padding: 4px 10px; background: #EFF6FF; margin-bottom: 4px;">
+            <div style="font-size: 7.5pt; font-weight: 800; color: #1D4ED8; letter-spacing: 0.05em;">ENTERPRISE SEAL</div>
+            <div style="font-size: 6.5pt; color: #3B82F6;">VERIFIED ARCHITECTURE</div>
+          </div>
+          <div style="font-size: 7pt; color: #64748B;">
+            Document Validity: 30 Days<br>
+            Release Version: v2.4.0
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <div>CIPHER Web & AI Solutions · UrbanTwin AI Project Proposal</div>
+    <div class="page-num">Page 12 of 12</div>
+  </div>
+</div>
+</div><!-- end #proposal-pages-container -->
+
+<script>
+  let isPdfView = false;
+  function togglePdfViewer(forcePdf) {
+    const pages = document.getElementById('proposal-pages-container');
+    const container = document.getElementById('pdf-viewer-container');
+    const frame = document.getElementById('pdf-viewer-frame');
+    const label = document.getElementById('viewerToggleLabel');
+
+    if (forcePdf !== undefined) {
+      isPdfView = forcePdf;
+    } else {
+      isPdfView = !isPdfView;
+    }
+
+    if (isPdfView) {
+      if (frame.src === "about:blank" || !frame.src.includes('/proposal.pdf')) {
+        frame.src = '/proposal.pdf';
+      }
+      pages.style.display = 'none';
+      container.style.display = 'block';
+      label.textContent = 'Switch to HTML Blueprint';
+    } else {
+      container.style.display = 'none';
+      pages.style.display = 'block';
+      label.textContent = 'View in Embedded PDF Viewer';
+    }
+  }
+
+  // Auto-activate PDF view if ?view=pdf or #pdf in URL
+  if (window.location.search.includes('view=pdf') || window.location.hash === '#pdf') {
+    togglePdfViewer(true);
+  }
+</script>
+</body>
+</html>

@@ -185,6 +185,39 @@ def test_ocr_engine_accuracy_greater_than_90():
         assert "svg" in data_deg["ocr_visual_svg"]
 
 
+def test_anpr_ocr_image_upload():
+    from training.dataset_generator import render_license_plate
+    import io
+    import base64
+
+    # 1. Test multipart upload with real rendered license plate image
+    img = render_license_plate("KA05MC2024", degradation="clean")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    img_bytes = buf.getvalue()
+
+    files = {"file": ("ka05.png", img_bytes, "image/png")}
+    res = client.post("/api/v1/cameras/ocr_upload", files=files)
+    assert res.status_code == 200
+    data = res.json()
+    assert data["recognized_plate"] == "KA05MC2024"
+    assert data["recognition_confidence"] >= 0.85
+    assert data["ocr_test_result"]["passes_90_pct_threshold"] is True
+    assert len(data["ocr_test_result"]["character_breakdown"]) == 10
+    assert "svg" in data["ocr_test_result"]["ocr_visual_svg"]
+
+    # 2. Test base64 upload
+    b64_str = base64.b64encode(img_bytes).decode()
+    res_b64 = client.post("/api/v1/cameras/ocr_image_base64", json={"image_base64": b64_str, "filename": "ka05_b64.png"})
+    assert res_b64.status_code == 200
+    data_b64 = res_b64.json()
+    assert data_b64["recognized_plate"] == "KA05MC2024"
+
+    # 3. Test empty file error handling
+    res_empty = client.post("/api/v1/cameras/ocr_upload", files={"file": ("empty.png", b"", "image/png")})
+    assert res_empty.status_code == 400
+
+
 def test_single_plate_trajectory_reconstruction():
     res = client.get("/api/v1/vehicles/7XYZ912/trajectory")
     assert res.status_code == 200

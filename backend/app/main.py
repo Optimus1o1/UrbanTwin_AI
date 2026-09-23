@@ -73,6 +73,8 @@ async def add_security_headers_and_timing(request: Request, call_next):
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 INDEX_HTML = STATIC_DIR / "index.html"
 DASHBOARD_HTML = STATIC_DIR / "dashboard.html"
+PROPOSAL_HTML = STATIC_DIR / "proposal.html"
+PROPOSAL_PDF = STATIC_DIR / "UrbanTwin_AI_Detailed_Project_Proposal.pdf"
 
 # Custom OpenAPI Schema with JWT Bearer Security & Curated Tags
 def custom_openapi():
@@ -232,3 +234,50 @@ if STATIC_DIR.exists():
         if DASHBOARD_HTML.exists():
             return FileResponse(str(DASHBOARD_HTML))
         return FileResponse(str(INDEX_HTML))
+
+    @app.get("/proposal", include_in_schema=False)
+    @app.get("/blueprint", include_in_schema=False)
+    def get_proposal():
+        if PROPOSAL_HTML.exists():
+            return FileResponse(str(PROPOSAL_HTML))
+        return FileResponse(str(INDEX_HTML))
+
+    @app.get("/proposal.pdf", include_in_schema=False)
+    @app.get("/proposal/view", include_in_schema=False)
+    def view_proposal_pdf():
+        candidates = [
+            PROPOSAL_PDF,
+            STATIC_DIR.parent.parent / "UrbanTwin_AI_Detailed_Project_Proposal.pdf",
+            Path(r"C:\Users\ANIKET\Downloads\UrbanTwin_AI_Detailed_Project_Proposal.pdf")
+        ]
+        for candidate in candidates:
+            if candidate.exists():
+                return FileResponse(
+                    str(candidate),
+                    media_type="application/pdf",
+                    headers={"Content-Disposition": "inline; filename=\"UrbanTwin_AI_Detailed_Project_Proposal.pdf\""}
+                )
+        if PROPOSAL_HTML.exists():
+            return FileResponse(str(PROPOSAL_HTML))
+        return FileResponse(str(INDEX_HTML))
+
+    @app.get("/proposal/download", include_in_schema=False)
+    @app.get("/download-proposal", include_in_schema=False)
+    def download_proposal_pdf():
+        candidates = [
+            PROPOSAL_PDF,
+            STATIC_DIR.parent.parent / "UrbanTwin_AI_Detailed_Project_Proposal.pdf",
+            Path(r"C:\Users\ANIKET\Downloads\UrbanTwin_AI_Detailed_Project_Proposal.pdf")
+        ]
+        for candidate in candidates:
+            if candidate.exists():
+                return FileResponse(
+                    str(candidate),
+                    media_type="application/pdf",
+                    filename="UrbanTwin_AI_Detailed_Project_Proposal.pdf",
+                    headers={"Content-Disposition": "attachment; filename=\"UrbanTwin_AI_Detailed_Project_Proposal.pdf\""}
+                )
+        if PROPOSAL_HTML.exists():
+            return FileResponse(str(PROPOSAL_HTML))
+        return FileResponse(str(INDEX_HTML))
+
